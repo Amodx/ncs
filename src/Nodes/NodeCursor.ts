@@ -63,10 +63,6 @@ export class NodeCursor {
     return this._index;
   }
 
-  get parentIndex() {
-    return this.arrays._parents[this._index];
-  }
-
   get id(): bigint | null {
     return this.graph._nodes._indexMap[this.index] || null;
   }
@@ -268,9 +264,9 @@ export class NodeCursor {
       this.observers!.isDisposedSet &&
       this.observers!.disposed.notify(this);
 
-    if (this.parent !== undefined) {
+    if (this.parent > -1) {
       nodeCursor.setNode(this.graph, this.parent);
-      nodeCursor.removeChild(this.index);
+      nodeCursor.removeChild(nodeCursor.getChildIndex(this.index));
     }
     if (this.arrays._components[this._index]?.length) {
       this.components!.dispose();
@@ -306,9 +302,9 @@ export class NodeCursor {
 
   parentTo(nodeToParentTo: NodeCursor) {
     if (nodeToParentTo.hasChild(this)) return;
-    if (this.parent !== undefined) {
+    if (this.parent > -1) {
       nodeCursor.setNode(this.graph, this.parent);
-      nodeCursor.removeChild(this.index);
+      nodeCursor.removeChild(nodeCursor.getChildIndex(this.index));
     }
     nodeToParentTo.addChild(this);
     this.parent = nodeToParentTo.index;
@@ -319,12 +315,24 @@ export class NodeCursor {
 
   getChild(index: number, cursor = NodeCursor.Get()) {
     const childrenArray = this.childrenArray;
+
     if (!childrenArray || childrenArray[index] === undefined) return null;
+    console.warn("GET CHILD", index, [...childrenArray], childrenArray[index]);
     return cursor.setNode(this.graph, childrenArray[index]);
   }
 
+  getChildIndex(node: NodeCursor | number) {
+    let index = typeof node == "number" ? node : node.index;
+    for (let i = 0; i < this.childrenArray.length; i++) {
+      if (this.childrenArray[i] == index) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   addChild(node: NodeCursor) {
-    if (this.hasChild(node)) return;
+    if (this.hasChild(node)) return this.getChildIndex(node);
     if (!this.childrenArray) {
       this.arrays._children[this._index] = NCSPools.numberArray.get() || [];
     }
@@ -340,32 +348,29 @@ export class NodeCursor {
     if (node.hasObservers) {
       node.observers!.isParentedSet && node.observers!.parented.notify(node);
     }
+    return this.childrenArray.length - 1;
   }
 
   removeChild(index: number) {
-    if (!this.childrenArray) return;
-    for (let i = 0; i < this.childrenArray.length; i++) {
-      if (this.childrenArray[i] == index) {
-        const child = this.childrenArray.splice(i, 1)![0];
-        nodeCursor.setNode(this.graph, child);
-        if (this.hasObservers) {
-          this.hasObservers &&
-            this.observers!.isChildRemovedSet &&
-            this.observers!.childRemoved.notify(nodeCursor);
-          this.hasObservers &&
-            this.observers!.isChildrenUpdatedSet &&
-            this.observers!.childrenUpdated.notify(nodeCursor);
-        }
+    if (!this.childrenArray || !this.childrenArray[index]) return;
 
-        if (nodeCursor.hasObservers) {
-          nodeCursor.observers!.isRemovedFromParentSet &&
-            nodeCursor.observers!.removedFromParent.notify(nodeCursor);
-        }
-
-        return child;
-      }
+    const child = this.childrenArray.splice(index, 1)![0];
+    nodeCursor.setNode(this.graph, child);
+    if (this.hasObservers) {
+      this.hasObservers &&
+        this.observers!.isChildRemovedSet &&
+        this.observers!.childRemoved.notify(nodeCursor);
+      this.hasObservers &&
+        this.observers!.isChildrenUpdatedSet &&
+        this.observers!.childrenUpdated.notify(nodeCursor);
     }
-    return null;
+
+    if (nodeCursor.hasObservers) {
+      nodeCursor.observers!.isRemovedFromParentSet &&
+        nodeCursor.observers!.removedFromParent.notify(nodeCursor);
+    }
+
+    return child;
   }
 
   addUniqueId() {

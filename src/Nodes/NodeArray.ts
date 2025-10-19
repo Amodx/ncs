@@ -32,10 +32,13 @@ export class NodeArray {
   _disposed: boolean[] = [];
   _enabled: boolean[] = [];
   _hasObservers: boolean[] = [];
+  private _count = 0;
   addNode(id: bigint | null, parent: number, name: string): number {
-    let slot = this._freeSlots.length
-      ? this._freeSlots.shift()!
-      : this._parents.length;
+    let slot = this._freeSlots.shift();
+    if (slot === undefined) {
+      slot = this._count;
+      this._count++;
+    }
 
     id && this.addNodeId(slot, id);
     this._parents[slot] = parent;
@@ -43,10 +46,11 @@ export class NodeArray {
     this._disposed[slot] = false;
     this._enabled[slot] = true;
     this._hasObservers[slot] = false;
+
     return slot;
   }
   removeNode(slot: number) {
-    if (this._parents[slot] === undefined) return false;
+    if (this._parents[slot] === -1) return false;
     this._freeSlots.push(slot);
     this._indexMap[slot] && this.removeNodeId(this._indexMap[slot]);
     this._parents[slot] = -1;
@@ -54,11 +58,12 @@ export class NodeArray {
     this._disposed[slot] = true;
     this._enabled[slot] = false;
     this._hasObservers[slot] = false;
-    for (let i = 0; i < observerValues.length; i++) {
-      const observer = this._observers[i]![slot];
-      if (observer !== undefined) {
-        NCSPools.observers.addItem(observer);
-        (this._events[i] as any)![slot] = undefined;
+    for (let j = 0; j < observerValues.length; j++) {
+      const key = observerValues[j]; 
+      const obs = this._observers[key]?.[slot];
+      if (obs !== undefined) {
+        NCSPools.observers.addItem(obs);
+        (this._observers[key] as any)[slot] = undefined; 
       }
     }
     for (let i = 0; i < this._eventPalette.size; i++) {
