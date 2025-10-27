@@ -79,8 +79,9 @@ export type ComponentRegisterData<
    * It is up to the graph though when it gets called.
    *
    * @param component - The instance of the component being updated.
+   * @param delta - The time since the last update
    */
-  update?(component: ComponentCursor<ComponentSchema, Data, Shared>): void;
+  update?(component: ComponentCursor<ComponentSchema, Data, Shared>,delta:number): void;
 
   /**
    * Optional disposal function for the component.

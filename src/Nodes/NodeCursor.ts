@@ -276,10 +276,17 @@ export class NodeCursor {
     }
 
     if (this.childrenArray) {
-      for (let i = 0; i < this.childrenArray.length; i++) {
-        nodeCursor.setNode(this.graph, this.childrenArray[i]);
+      const templChildArray: number[] = NCSPools.numberArray.get() || [];
+      const children = this.childrenArray;
+      for (let i = 0; i < children.length; i++) {
+        templChildArray[i] = children[i];
+      }
+      for (let i = 0; i < templChildArray.length; i++) {
+        nodeCursor.setNode(this.graph, templChildArray[i]);
         nodeCursor.dispose();
       }
+      templChildArray.length = 0;
+      NCSPools.numberArray.addItem(templChildArray);
     }
 
     this.graph.removeNode(this.index);
@@ -317,7 +324,6 @@ export class NodeCursor {
     const childrenArray = this.childrenArray;
 
     if (!childrenArray || childrenArray[index] === undefined) return null;
-    console.warn("GET CHILD", index, [...childrenArray], childrenArray[index]);
     return cursor.setNode(this.graph, childrenArray[index]);
   }
 
@@ -343,7 +349,7 @@ export class NodeCursor {
       this.observers!.isChildAddedSet &&
         this.observers!.childAdded.notify(node);
       this.observers!.isChildrenUpdatedSet &&
-        this.observers!.childrenUpdated.notify(node);
+        this.observers!.childrenUpdated.notify(this);
     }
     if (node.hasObservers) {
       node.observers!.isParentedSet && node.observers!.parented.notify(node);
@@ -356,13 +362,14 @@ export class NodeCursor {
 
     const child = this.childrenArray.splice(index, 1)![0];
     nodeCursor.setNode(this.graph, child);
+
     if (this.hasObservers) {
       this.hasObservers &&
         this.observers!.isChildRemovedSet &&
         this.observers!.childRemoved.notify(nodeCursor);
       this.hasObservers &&
         this.observers!.isChildrenUpdatedSet &&
-        this.observers!.childrenUpdated.notify(nodeCursor);
+        this.observers!.childrenUpdated.notify(this);
     }
 
     if (nodeCursor.hasObservers) {

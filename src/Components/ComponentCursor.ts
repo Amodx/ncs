@@ -7,7 +7,7 @@ import { NCSPools } from "../Pools/NCSPools";
 export class ComponentCursor<
   ComponentSchema extends object = {},
   Data extends any = any,
-  Shared extends any = any,
+  Shared extends any = any
 > {
   static Get() {
     const cursor = NCSPools.componentCursor.get();
@@ -64,7 +64,6 @@ export class ComponentCursor<
     return this.arrays._disposed[this._index];
   }
   dispose() {
-
     if (this.__proto.dispose) this.__proto.dispose(this);
     this.arrays.removeComponent(this._index);
   }
@@ -84,7 +83,7 @@ export class ComponentCursor<
     return newCursor as any;
   }
 
-  update() {
-    this.__proto.update && this.__proto.update(this);
+  update(delta: number) {
+    this.__proto.update && this.__proto.update(this, delta);
   }
 }

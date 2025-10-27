@@ -114,13 +114,20 @@ export class Graph {
     if (!node) return false;
     return true;
   }
-
+  private _lastTime = 0;
   update() {
+    if ((this._lastTime == 0)) {
+      this._lastTime = performance.now();
+      return;
+    }
+    const current = performance.now();
+    const delta = current - this._lastTime;
+    this._lastTime = current;
     for (let i = 0; i < this._updatingComponents.length; i++) {
-      this._updatingComponents[i].update();
+      this._updatingComponents[i].update(delta);
     }
     for (let i = 0; i < this._systems.length; i++) {
-      this._systems[i].update();
+      this._systems[i].update(delta);
     }
   }
 }

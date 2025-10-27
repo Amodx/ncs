@@ -32,7 +32,8 @@ import {
   SchemaCreateData,
   SchemaProperty,
 } from "./Schema/Schema.types";
-import { PropertyData } from "Schema/Property/Property.types";
+import { PropertyData } from "./Schema/Property/Property.types";
+import { NodeCursor } from "./Nodes/NodeCursor";
 function traverseCreateSchema(
   obj: Record<string, SchemaProperty<any>>,
   parent: PropertyData
@@ -77,7 +78,18 @@ function traverseCreateSchema(
 
   return parent;
 }
+
+const Debug = {
+  logNode(node: NodeCursor) {
+    console.log("log node", node.index, node.cloneCursor());
+    for (const comp of node.traverseComponents()) {
+      console.log(comp.type, comp.schema.toJSON());
+    }
+  },
+};
+
 export const NCS = {
+  Debug,
   /** Create a graph. */
   createGraph() {
     return new Graph();
@@ -119,7 +131,6 @@ export const NCS = {
         s.createView(view);
       }
     }
-
 
     return s as any;
   },

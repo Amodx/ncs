@@ -53,22 +53,24 @@ export class NodeArray {
     if (this._parents[slot] === -1) return false;
     this._freeSlots.push(slot);
     this._indexMap[slot] && this.removeNodeId(this._indexMap[slot]);
-    this._parents[slot] = -1;
+    this._parents[slot] = 0;
     this._names[slot] = "";
     this._disposed[slot] = true;
     this._enabled[slot] = false;
     this._hasObservers[slot] = false;
     for (let j = 0; j < observerValues.length; j++) {
-      const key = observerValues[j]; 
-      const obs = this._observers[key]?.[slot];
-      if (obs !== undefined) {
-        NCSPools.observers.addItem(obs);
-        (this._observers[key] as any)[slot] = undefined; 
+      const key = observerValues[j];
+      const observer = this._observers[key]?.[slot];
+      if (observer !== undefined) {
+        observer.clear();
+        NCSPools.observers.addItem(observer);
+        (this._observers[key] as any)[slot] = undefined;
       }
     }
     for (let i = 0; i < this._eventPalette.size; i++) {
       const observer = this._events[i]![slot];
       if (observer !== undefined) {
+        observer.clear();
         NCSPools.observers.addItem(observer);
         (this._events[i] as any)![slot] = undefined;
       }

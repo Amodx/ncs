@@ -20,7 +20,6 @@ export class ComponentArray {
   _disposed: boolean[] = [];
   _data: any[] = [];
 
-
   schemaArray: SchemaArray;
 
   proto: ComponentRegisterData;
@@ -28,10 +27,7 @@ export class ComponentArray {
 
   private _nodeCursor: NodeCursor;
   private _componentCursor: ComponentCursor;
-  constructor(
-    public graph: Graph,
-    public numberTypeId: number
-  ) {
+  constructor(public graph: Graph, public numberTypeId: number) {
     const proto = NCSRegister.components.get(
       NCSRegister.components.idPalette.getStringId(numberTypeId)
     )!;
@@ -74,7 +70,7 @@ export class ComponentArray {
     return nodeIndex;
   }
 
-  update() {
+  update(delta: number) {
     const update = this.proto.update;
     if (!update) return;
     for (let i = 0; i < this._disposed.length; i++) {
@@ -84,7 +80,7 @@ export class ComponentArray {
         this.numberTypeId,
         i
       );
-      update(this._componentCursor);
+      update(this._componentCursor, delta);
     }
   }
 

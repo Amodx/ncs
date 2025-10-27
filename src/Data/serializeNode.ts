@@ -9,10 +9,7 @@ import {
   SerializedComponentData,
   SerializedNodeData,
 } from "./SerializedData.types";
-import {
-  ComponentRegisterData,
-  CreateComponentData,
-} from "Components/Component.types";
+import { CreateComponentData } from "../Components/Component.types";
 export function serializeNodeData(data: CreateNodeData): SerializedNodeData {
   return {
     name: data[1],

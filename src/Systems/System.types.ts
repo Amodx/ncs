@@ -13,5 +13,5 @@ export type SystemRegisterData = {
   /**
    * The update function  of the system.
    */
-  update(system: SystemInstance): void;
+  update(system: SystemInstance, delta: number): void;
 };
