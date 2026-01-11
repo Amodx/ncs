@@ -15,7 +15,7 @@ class ItemRegister<Item extends any> {
         ? this.items[this.idPalette.getNumberId(id)]
         : this.items[id];
     if (!item)
-      throw new Error(`[${this.itemtype}]: Entry with id ${id} does not exist`);
+      throw new Error(`NCS: [${this.itemtype}]: Entry with id ${id} does not exist`);
 
     return item;
   }

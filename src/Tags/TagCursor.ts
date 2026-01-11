@@ -47,4 +47,8 @@ export class TagCursor {
   toJSON(): string {
     return this.id;
   }
+
+  returnCursor() {
+    TagCursor.Retrun(this);
+  }
 }

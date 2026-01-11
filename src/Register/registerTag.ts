@@ -23,7 +23,7 @@ export function registerTag(data: TagRegisterData): RegisteredTag {
   const tag = new Tag(null, data);
 
   const typeId = NCSRegister.tags.register(data.id, tag);
-  // const map = TagInstanceMap.registerTag(tag.id);
+
   const createTag = (): number => {
     return typeId;
   };
@@ -31,7 +31,36 @@ export function registerTag(data: TagRegisterData): RegisteredTag {
   return Object.assign(createTag, data, {
     tag,
     data,
-    // getNodes: (graph: Graph) => map.getNodes(graph),
+    *getNodes(
+      graph: Graph,
+      nodeCursor = NodeCursor.Get()
+    ): Generator<NodeCursor> {
+      const array = graph._tags[typeId];
+      if (!array) return false;
+      for (let i = 0; i < array._node.length; i++) {
+        const slot = array._node[i];
+        if (slot < 0) continue;
+        nodeCursor.setNode(graph, array._node[i]);
+        yield nodeCursor;
+      }
+      return true;
+    },
+    *getTags(
+      graph: Graph,
+      cursor = TagCursor.Get(),
+      nodeCursor = NodeCursor.Get()
+    ): Generator<TagCursor> {
+      const array = graph._tags[typeId];
+      if (!array) return false;
+      for (let i = 0; i < array._node.length; i++) {
+        const slot = array._node[i];
+        if (slot < 0) continue;
+        nodeCursor.setNode(graph, slot);
+        cursor.setTag(nodeCursor, typeId, i);
+        yield cursor;
+      }
+      return true;
+    },
     // getTags: (graph: Graph) => map.getItems(graph),
     getChild(parent: NodeCursor, cursor?: TagCursor) {
       return parent.tags.getChild(data.id, cursor);
@@ -40,24 +69,21 @@ export function registerTag(data: TagRegisterData): RegisteredTag {
       return parent.tags.getAllChildlren(data.id);
     },
     getParent(parent: NodeCursor, cursor?: TagCursor) {
-      return parent.tags.getParent(data.id,cursor);
+      return parent.tags.getParent(data.id, cursor);
     },
     getAllParents(parent: NodeCursor) {
       return parent.tags.getAllParents(data.id);
     },
-    set(
-      parent: NodeCursor,
-      cursor: TagCursor = TagCursor.Get(),
-    ) {
+    set(parent: NodeCursor, cursor: TagCursor = TagCursor.Get()) {
       const newTag = parent.tags.add(createTag());
       cursor.setTag(parent, typeId, newTag);
       return cursor;
     },
     get(parent: NodeCursor, cursor?: TagCursor) {
-      return parent.tags.get(data.id,cursor);
+      return parent.tags.get(data.id, cursor);
     },
     remove(parent: NodeCursor) {
-      return parent.tags.remove(data.id,);
+      return parent.tags.remove(data.id);
     },
   }) as any;
 }

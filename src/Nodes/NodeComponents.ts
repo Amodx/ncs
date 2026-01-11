@@ -4,8 +4,8 @@ import { NodeCursor } from "./NodeCursor";
 import { NCSRegister } from "../Register/NCSRegister";
 import { ComponentArray } from "../Components/ComponentArray";
 import { NCSPools } from "../Pools/NCSPools";
+import { NCS } from "../NCS";
 
-const defaultCursor = ComponentCursor.Get();
 export class NodeComponents {
   static Get() {
     const cursor = NCSPools.nodeComponents.get();
@@ -25,10 +25,12 @@ export class NodeComponents {
   dispose() {
     if (!this.components) return;
     const components = this.components;
+    const tempCursor = ComponentCursor.Get();
     for (let i = 0; i < components.length; i += 2) {
-      defaultCursor.setInstance(this.node, components[i], components[i + 1]);
-      defaultCursor.dispose();
+      tempCursor.setInstance(this.node, components[i], components[i + 1]);
+      tempCursor.dispose();
     }
+    tempCursor.returnCursor();
   }
 
   add(comp: CreateComponentData) {
@@ -75,15 +77,17 @@ export class NodeComponents {
 
     this.components.push(typeId, componentIndex);
     compArray.observers.nodeAdded.notify(this.node.index);
+    const temp = ComponentCursor.Get();
     if (this.node.hasObservers) {
-      defaultCursor.setInstance(this.node, typeId, componentIndex);
+      temp.setInstance(this.node, typeId, componentIndex);
 
       this.node.observers.isComponentAddedSet &&
-        this.node.observers.componentAdded.notify(defaultCursor);
+        this.node.observers.componentAdded.notify(temp);
       this.node.observers.isComponentsUpdatedSet &&
-        this.node.observers.componentsUpdated.notify(defaultCursor);
+        this.node.observers.componentsUpdated.notify(temp);
     }
 
+    temp.returnCursor();
     return componentIndex;
   }
 
@@ -102,16 +106,18 @@ export class NodeComponents {
     }
 
     if (removeIndex == -1) return;
-    defaultCursor.setInstance(this.node, numberId, removeComponentIndex);
+    const temp = ComponentCursor.Get();
+    temp.setInstance(this.node, numberId, removeComponentIndex);
     this.components.splice(removeIndex, 2)!;
 
     if (this.node.hasObservers) {
       this.node.observers.isComponentRemovedSet &&
-        this.node.observers.componentRemoved.notify(defaultCursor);
+        this.node.observers.componentRemoved.notify(temp);
       this.node.observers.isComponentsUpdatedSet &&
-        this.node.observers.componentsUpdated.notify(defaultCursor);
+        this.node.observers.componentsUpdated.notify(temp);
     }
-    defaultCursor.dispose();
+    temp.dispose();
+    temp.returnCursor();
     return true;
   }
   has(type: string): boolean {
@@ -135,7 +141,7 @@ export class NodeComponents {
     const numberId = NCSRegister.components.idPalette.getNumberId(type);
     for (let i = 0; i < components.length; i += 2) {
       if (components[i] == numberId) {
-        if (nodeCursor !== this.node) this.node.cloneCursor(nodeCursor);
+        nodeCursor.setNode(this.node.graph, this.node.index);
         cursor.setInstance(nodeCursor, numberId, components[i + 1]);
         return cursor;
       }
@@ -160,18 +166,20 @@ export class NodeComponents {
     const components = this.components;
     if (!components) return false;
     const numberId = NCSRegister.components.idPalette.getNumberId(type);
+    const tempCursor = ComponentCursor.Get();
     for (let i = components.length; i > 0; i -= 2) {
       if (components[i] == numberId) {
-        defaultCursor.setInstance(this.node, components[i], components[i + 1]);
+        tempCursor.setInstance(this.node, components[i], components[i + 1]);
         this.components.splice(i, 2)!;
         if (this.node.hasObservers) {
           this.node.observers.isComponentRemovedSet &&
-            this.node.observers.componentRemoved.notify(defaultCursor);
+            this.node.observers.componentRemoved.notify(tempCursor);
           this.node.observers.isComponentsUpdatedSet &&
-            this.node.observers.componentsUpdated.notify(defaultCursor);
+            this.node.observers.componentsUpdated.notify(tempCursor);
         }
       }
     }
+    tempCursor.returnCursor();
     return true;
   }
 
@@ -180,11 +188,17 @@ export class NodeComponents {
     cursor = ComponentCursor.Get(),
     nodeCursor = NodeCursor.Get()
   ): ComponentCursor<any, any, any> | null {
-    for (const child of this.node.traverseChildren()) {
+    const tempCursor = NodeCursor.Get();
+    for (const child of this.node.traverseChildren(tempCursor)) {
       if (!child.components) continue;
+      nodeCursor.setNode(this.node.graph, child.index);
       const found = child.components.get(type, cursor, nodeCursor);
-      if (found) return found;
+      if (found) {
+        tempCursor.returnCursor();
+        return found;
+      }
     }
+    tempCursor.returnCursor();
     return null;
   }
 
@@ -193,11 +207,16 @@ export class NodeComponents {
     cursor = ComponentCursor.Get(),
     nodeCursor = NodeCursor.Get()
   ): ComponentCursor<any, any, any> | null {
-    for (const parent of this.node.traverseParents()) {
+    const tempCursor = NodeCursor.Get();
+    for (const parent of this.node.traverseParents(tempCursor)) {
       if (!parent.components) continue;
       const found = parent.components.get(type, cursor, nodeCursor);
-      if (found) return found;
+      if (found) {
+        tempCursor.returnCursor();
+        return found;
+      }
     }
+    tempCursor.returnCursor();
     return null;
   }
 }

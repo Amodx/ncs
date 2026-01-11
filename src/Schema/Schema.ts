@@ -30,7 +30,11 @@ const traverseCreate = (
   for (let i = 0; i < properties.length; i++) {
     const data = properties[i];
 
-    if (typeof data.value == "object" && !data.children?.length) {
+    if (
+      typeof data.value == "object" &&
+      !data.children?.length &&
+      !Array.isArray(data.value)
+    ) {
       data.children ??= [];
       for (const key in data.value) {
         const value = data.value[key];
@@ -145,7 +149,13 @@ export class Schema<Shape extends Record<string, any> = {}> {
     const data: PropertyData[] = [];
     for (const id in shape) {
       const value = shape[id];
-      if (typeof value == "object") {
+      if (
+        typeof value == "object" &&
+        value !== null &&
+        typeof value !== "undefined" &&
+        !Array.isArray(id) &&
+        !ArrayBuffer.isView(value)
+      ) {
         data.push(
           traverseCreateFromObject(value, {
             id,
@@ -254,7 +264,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
         this._binaryObjectCursorClass
       );
     }
-    if (!view) throw new Error(`Invalid data`);
+    if (!view) throw new Error(`NCS: Invalid data`);
     const viewIndex = this.viewIdPalettew.register(data.id);
     this.views[viewIndex] = view;
     return view;

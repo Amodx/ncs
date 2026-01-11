@@ -1,9 +1,8 @@
 const buffer = new ArrayBuffer(16);
 const randomArray = new Uint8Array(buffer);
 const view = new DataView(buffer);
-
+const mask64 = 0xffff_ffff_ffff_ffffn;
 export class NodeId {
-
   static Create(): bigint {
     crypto.getRandomValues(randomArray);
     const high = BigInt(view.getUint32(0)) << 96n;
@@ -14,6 +13,18 @@ export class NodeId {
     return bigIntId;
   }
 
+  static GetHighPart(id: bigint): bigint {
+    return (id >> 64n) & mask64;
+  }
+
+  static GetLowPart(id: bigint): bigint {
+    return id & mask64;
+  }
+
+  static GetCombined(lower: bigint, upper: bigint): bigint {
+    return ((upper & mask64) << 64n) | (lower & mask64);
+  }
+  
   static CreateString(): string {
     return this.ToHexString(this.Create());
   }

@@ -34,6 +34,8 @@ import {
 } from "./Schema/Schema.types";
 import { PropertyData } from "./Schema/Property/Property.types";
 import { NodeCursor } from "./Nodes/NodeCursor";
+import { ComponentCursor } from "./Components/ComponentCursor";
+import { SerializedNodeData } from "./Data/SerializedData.types";
 function traverseCreateSchema(
   obj: Record<string, SchemaProperty<any>>,
   parent: PropertyData
@@ -81,10 +83,15 @@ function traverseCreateSchema(
 
 const Debug = {
   logNode(node: NodeCursor) {
-    console.log("log node", node.index, node.cloneCursor());
-    for (const comp of node.traverseComponents()) {
-      console.log(comp.type, comp.schema.toJSON());
+    console.log("log node", node.index);
+    const temp = ComponentCursor.Get();
+    for (const comp of node.traverseComponents(temp)) {
+      console.log(comp.type, comp.schema && comp.schema.toJSON());
     }
+    temp.returnCursor();
+  },
+  output(node: NodeCursor): [index: number, data: SerializedNodeData] {
+    return [node.index, serializeNode(node)] as const;
   },
 };
 

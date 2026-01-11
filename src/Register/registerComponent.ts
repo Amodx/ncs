@@ -133,7 +133,6 @@ export const registerComponent = <
         nodeCursor.setNode(graph, array._node[i]);
         yield nodeCursor;
       }
-      NodeCursor.Retrun(nodeCursor);
       return true;
     },
     *getComponents(
@@ -143,14 +142,11 @@ export const registerComponent = <
     ): Generator<ComponentCursor> {
       const array = graph._components[typeId];
       if (!array) return false;
-
       for (let i = 0; i < array._disposed.length; i++) {
         nodeCursor.setNode(graph, array._node[i]);
         cursor.setInstance(nodeCursor, typeId, i);
         yield cursor;
       }
-      ComponentCursor.Retrun(cursor);
-      NodeCursor.Retrun(nodeCursor);
       return true;
     },
     set(
@@ -180,7 +176,7 @@ export const registerComponent = <
       const found = node.components.get(data.type, cursor, nodeCursor);
       if (!found)
         throw new Error(
-          `Node [${node.name}] does not have required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have required component [${data.type}].`
         );
       return found;
     },
@@ -199,7 +195,7 @@ export const registerComponent = <
       const comp = node.components.getChild(data.type, cursor, nodeCursor);
       if (!comp)
         throw new Error(
-          `Node [${node.name}] does not have a child with required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have a child with required component [${data.type}].`
         );
       return comp;
     },
@@ -218,7 +214,7 @@ export const registerComponent = <
       const comp = node.components.getParent(data.type, cursor, nodeCursor);
       if (!comp)
         throw new Error(
-          `Node [${node.name}] does not have a parent with required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have a parent with required component [${data.type}].`
         );
       return comp;
     },

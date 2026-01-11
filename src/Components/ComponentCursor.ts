@@ -17,6 +17,11 @@ export class ComponentCursor<
   static Retrun(cursor: ComponentCursor) {
     return NCSPools.componentCursor.addItem(cursor);
   }
+  /**The index of the parent node in the node array */
+  get nodeIndex() {
+    return this.node.index;
+  }
+  /**The index in the component array */
   get index() {
     return this._index;
   }

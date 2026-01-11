@@ -49,6 +49,11 @@ export type ComponentRegisterData<
    */
   type: string;
 
+  performance?:{
+    /**If set to true component init will use a re-usable cursor that will be used for other components.  */
+    useReusableCursor:boolean
+  }
+
   /**
    * The schema used to create an editable version of the component.
    * For the actual ComponentInstance the schema is created into an object.

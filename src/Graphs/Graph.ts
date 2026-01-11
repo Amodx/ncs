@@ -8,17 +8,13 @@ import { TagArray } from "../Tags/TagArray";
 import { NCSPools } from "../Pools/NCSPools";
 import { SystemInstance } from "../Systems/SystemInstance";
 
-const parentCursor = NodeCursor.Get();
-const nodeCursor = NodeCursor.Get();
-
 function createNode(graph: Graph, data: CreateNodeData, parent: number) {
   const newNode = graph._nodes.addNode(
     typeof data[0] == "string" ? NodeId.FromString(data[0]) : data[0],
     parent,
     data[1]
   );
-  nodeCursor.graph = graph;
-
+  const nodeCursor = NodeCursor.Get();
   nodeCursor.setNode(graph, newNode);
 
   if (data[2]?.length) {
@@ -30,11 +26,6 @@ function createNode(graph: Graph, data: CreateNodeData, parent: number) {
     for (let i = 0; i < data[3].length; i++) {
       nodeCursor.tags.add(data[3][i]);
     }
-  }
-
-  if (parent >= 0) {
-    parentCursor.setNode(graph, parent);
-    parentCursor.addChild(nodeCursor);
   }
 
   if (data[4]?.length) {
@@ -51,6 +42,12 @@ function createNode(graph: Graph, data: CreateNodeData, parent: number) {
   data[4] = null;
   NCSPools.createNodeData.addItem(data);
 
+  if (parent >= 0) {
+    const parentCursor = NodeCursor.Get();
+    parentCursor.setNode(graph, parent);
+    parentCursor.addChild(nodeCursor);
+    parentCursor.returnCursor();
+  }
   return nodeCursor;
 }
 
@@ -68,19 +65,19 @@ export class Graph {
     const rootIndex = this._nodes.addNode(null, -1, "root");
     this.root.setNode(this, rootIndex);
   }
-  getNode(index: number, cursor = nodeCursor) {
+  getNode(index: number, cursor = NodeCursor.Get()) {
     const parentIndex = this._nodes._parents[index];
     if (typeof parentIndex === "undefined")
-      throw new Error(`Node with index ${index} does not exist`);
+      throw new Error(`NCS: Node with index ${index} does not exist`);
     cursor.setNode(this, index);
     return cursor;
   }
 
-  getNodeFromId(id: bigint | string, cursor = nodeCursor) {
+  getNodeFromId(id: bigint | string, cursor = NodeCursor.Get()) {
     if (typeof id == "string") id = NodeId.FromString(id);
     const nodeIndex = this._nodes._idMap.get(id);
     if (typeof nodeIndex === "undefined")
-      throw new Error(`Node with id ${id} does not exist`);
+      throw new Error(`NCS: Node with id ${id} does not exist`);
     cursor.setNode(this, nodeIndex);
     return cursor;
   }
@@ -88,8 +85,12 @@ export class Graph {
   addNode(
     data: CreateNodeData,
     parent: number = this.root.index,
-    cursor = nodeCursor
+    cursor = NodeCursor.Get()
   ) {
+    if (typeof parent !== "number")
+      throw new Error(
+        `NCS: Passed in invalid parent ${parent} in graph.addNode`
+      );
     const newNode = createNode(this, data, parent);
     if (newNode.hasComponents) {
       const components = newNode.components.components;
@@ -106,6 +107,7 @@ export class Graph {
       }
     }
     newNode.toRef(cursor);
+    newNode.returnCursor();
     return cursor;
   }
 
@@ -116,7 +118,7 @@ export class Graph {
   }
   private _lastTime = 0;
   update() {
-    if ((this._lastTime == 0)) {
+    if (this._lastTime == 0) {
       this._lastTime = performance.now();
       return;
     }

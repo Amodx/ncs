@@ -39,7 +39,7 @@ export class NodeArray {
       slot = this._count;
       this._count++;
     }
-
+    
     id && this.addNodeId(slot, id);
     this._parents[slot] = parent;
     this._names[slot] = name;

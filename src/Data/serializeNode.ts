@@ -4,16 +4,45 @@ import { NodeCursor } from "../Nodes/NodeCursor";
 import {
   createRemoteComponent,
   serializeComponent,
+  serializeComponentData,
 } from "./serializeComponent";
 import {
   SerializedComponentData,
   SerializedNodeData,
 } from "./SerializedData.types";
 import { CreateComponentData } from "../Components/Component.types";
+import { NCSRegister } from "../Register/NCSRegister";
 export function serializeNodeData(data: CreateNodeData): SerializedNodeData {
-  return {
+
+  const nodeData: SerializedNodeData = {
     name: data[1],
   };
+
+  if (typeof data[0] == "string") {
+    nodeData.id = data[0];
+  }
+  if (typeof data[0] == "bigint") {
+    nodeData.id = NodeId.ToHexString(data[0]);
+  }
+  if (data[2]) {
+    nodeData.components = [];
+    for (const comp of data[2]) {
+      nodeData.components.push(serializeComponentData(comp));
+    }
+  }
+  if (data[3]) {
+    nodeData.tags = [];
+    for (const tag of data[3]) {
+      nodeData.tags.push(NCSRegister.tags.get(tag).id);
+    }
+  }
+  if (data[4]) {
+    nodeData.children = [];
+    for (const child of data[4]) {
+      nodeData.children.push(serializeNodeData(child));
+    }
+  }
+  return nodeData;
 }
 
 /** Serialize the node data as is for storage*/

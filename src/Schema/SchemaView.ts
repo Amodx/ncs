@@ -110,7 +110,7 @@ export class SchemaView<Shape extends {} = any> {
       }
       return current;
     }
-    throw new Error(`Invalid create data`);
+    throw new Error(`NCS: Invalid create data`);
   }
 
   createCursor(): SchemaCursor<Shape> {

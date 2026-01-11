@@ -76,7 +76,7 @@ export function registerContext<
     getRequired: (parent: NodeCursor) => {
       const found = parent.context.get(data.type);
       if (!found)
-        throw new Error(`Could not find required context type: ${data.type}`);
+        throw new Error(`NCS: Could not find required context type: ${data.type}`);
       return found;
     },
     remove: (parent: NodeCursor) => {

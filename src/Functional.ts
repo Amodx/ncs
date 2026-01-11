@@ -38,6 +38,8 @@ export function Node(
   maybeComponentsOrChildren?: CreateComponentData[] | number[] | null,
   ...restChildren: CreateNodeData[]
 ): CreateNodeData {
+  if (typeof dataOrComponents == "string" && dataOrComponents == "")
+    dataOrComponents = "New Node";
   if (!dataOrComponents) {
     return NCS.createNode(null, "New Node", null, undefined, restChildren);
   }

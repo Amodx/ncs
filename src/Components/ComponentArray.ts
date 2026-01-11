@@ -88,12 +88,21 @@ export class ComponentArray {
     const init = this.proto.init;
     if (!init) return false;
 
-    this._componentCursor.setInstance(
-      this._nodeCursor.setNode(this.graph, this._node[index]),
+    const cursor = !this.proto.performance?.useReusableCursor
+      ? ComponentCursor.Get()
+      : this._componentCursor;
+    const nodeCursor = !this.proto.performance?.useReusableCursor
+      ? NodeCursor.Get()
+      : this._nodeCursor;
+    cursor.setInstance(
+     nodeCursor
+     .setNode(this.graph, this._node[index]),
       this.numberTypeId,
       index
     );
-    init(this._componentCursor);
+
+    init(cursor);
+
     return false;
   }
 }
