@@ -119,7 +119,7 @@ export class NodeContext {
         }
       }
     }
-    NodeCursor.Retrun(parentCursor);
+    NodeCursor.Return(parentCursor);
     return null;
   }
 }

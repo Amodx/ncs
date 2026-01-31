@@ -27,9 +27,12 @@ export class ComponentArray {
 
   private _nodeCursor: NodeCursor;
   private _componentCursor: ComponentCursor;
-  constructor(public graph: Graph, public numberTypeId: number) {
+  constructor(
+    public graph: Graph,
+    public numberTypeId: number,
+  ) {
     const proto = NCSRegister.components.get(
-      NCSRegister.components.idPalette.getStringId(numberTypeId)
+      NCSRegister.components.idPalette.getStringId(numberTypeId),
     )!;
     if (proto.schema) this.schemaArray = proto.schema.array;
     this.proto = proto;
@@ -39,10 +42,10 @@ export class ComponentArray {
   addComponent(
     node: number,
     schema: any | null,
-    schemaView: string | null
+    schemaView: string | null,
   ): number {
     let slot = this._freeSlots.length
-      ? this._freeSlots.shift()!
+      ? this._freeSlots.pop()!
       : this._node.length;
     this._node[slot] = node;
     this._disposed[slot] = false;
@@ -55,7 +58,7 @@ export class ComponentArray {
   }
 
   removeComponent(index: number) {
-    if (this._node[index] === undefined) return null;
+    if (this._disposed[index]) return null;
     componentObserverData[0] = this.numberTypeId;
     componentObserverData[1] = index;
     this.observers.componentRemoved.notify(componentObserverData);
@@ -78,7 +81,7 @@ export class ComponentArray {
       this._componentCursor.setInstance(
         this._nodeCursor.setNode(this.graph, this._node[i]),
         this.numberTypeId,
-        i
+        i,
       );
       update(this._componentCursor, delta);
     }
@@ -95,14 +98,13 @@ export class ComponentArray {
       ? NodeCursor.Get()
       : this._nodeCursor;
     cursor.setInstance(
-     nodeCursor
-     .setNode(this.graph, this._node[index]),
+      nodeCursor.setNode(this.graph, this._node[index]),
       this.numberTypeId,
-      index
+      index,
     );
 
     init(cursor);
 
-    return false;
+    return true;
   }
 }

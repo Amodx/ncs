@@ -9,7 +9,7 @@ export class ItemPool<Item> {
   }
 
   get() {
-    const item = this.items.shift()!;
+    const item = this.items.pop()!;
     if (!item) return null;
     return item;
   }

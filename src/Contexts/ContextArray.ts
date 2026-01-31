@@ -8,7 +8,7 @@ export class ContextArray {
   _state: ContextStateData[] = [];
   _disposed: boolean[] = [];
   _data: any[] = [];
-  schemaArray: SchemaArray[];
+  schemaArray: (SchemaArray | null)[] = [];
 
   numberTypeId: number;
 
@@ -17,10 +17,10 @@ export class ContextArray {
     node: number[],
     state: ContextStateData,
     schema: any | null,
-    data: any | null = null
+    data: any | null = null,
   ): number {
     let slot = this._freeSlots.length
-      ? this._freeSlots.shift()!
+      ? this._freeSlots.pop()!
       : this._node.length;
     const contextSchema = NCSRegister.contexts.get(type)!.schema;
     if (contextSchema) {
@@ -30,6 +30,8 @@ export class ContextArray {
         this.schemaArray[type] = schemaArray;
       }
       schemaArray.setData(slot, schema);
+    } else {
+      this.schemaArray[type] = null;
     }
     this._type[slot] = type;
     this._node[slot] = node;
@@ -47,10 +49,11 @@ export class ContextArray {
     (this._state as any)[index] = -1;
     this._disposed[index] = true;
     let schemaArray = this.schemaArray[this._type[index]];
-    (this._type as any)[index] = -1;
+    this._type[index] = -1;
     if (schemaArray) {
       schemaArray.removeData(index);
     }
+    this.schemaArray[this._type[index]] = null;
     (this._data as any)[index] = undefined;
 
     return data;

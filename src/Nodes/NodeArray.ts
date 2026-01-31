@@ -34,12 +34,12 @@ export class NodeArray {
   _hasObservers: boolean[] = [];
   private _count = 0;
   addNode(id: bigint | null, parent: number, name: string): number {
-    let slot = this._freeSlots.shift();
+    let slot = this._freeSlots.pop();
     if (slot === undefined) {
       slot = this._count;
       this._count++;
     }
-    
+
     id && this.addNodeId(slot, id);
     this._parents[slot] = parent;
     this._names[slot] = name;
@@ -50,10 +50,10 @@ export class NodeArray {
     return slot;
   }
   removeNode(slot: number) {
-    if (this._parents[slot] === -1) return false;
+    if (this._disposed[slot] === true) return false;
     this._freeSlots.push(slot);
     this._indexMap[slot] && this.removeNodeId(this._indexMap[slot]);
-    this._parents[slot] = 0;
+    this._parents[slot] = -1;
     this._names[slot] = "";
     this._disposed[slot] = true;
     this._enabled[slot] = false;

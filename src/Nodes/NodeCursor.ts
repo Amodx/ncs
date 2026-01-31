@@ -19,14 +19,14 @@ export class NodeCursor {
     return cursor;
   }
 
-  static Retrun(cursor: NodeCursor) {
+  static Return(cursor: NodeCursor) {
     if (cursor.index !== -1) {
       cursor.clear(
         cursor.hasEvents,
         cursor.hasContexts,
         cursor.hasObservers,
         cursor.hasComponents,
-        cursor.hasTags
+        cursor.hasTags,
       );
     }
     NCSPools.nodeCursor.addItem(cursor);
@@ -37,7 +37,7 @@ export class NodeCursor {
     context: boolean,
     observers: boolean,
     compoents: boolean,
-    tags: boolean
+    tags: boolean,
   ) {
     this._index = -1;
     if (events && this._events) {
@@ -206,7 +206,9 @@ export class NodeCursor {
 
     if (!array) return false;
     const templChildArray: number[] = NCSPools.numberArray.get() || [];
-    for (let i = 0; i < array.length; i++) {
+    const length = array.length;
+    templChildArray.length = length;
+    for (let i = 0; i < length; i++) {
       templChildArray[i] = array[i];
     }
     let usedTemp = false;
@@ -214,7 +216,7 @@ export class NodeCursor {
       usedTemp = true;
       cursor = NodeCursor.Get();
     }
-    for (let i = 0; i < templChildArray.length; i++) {
+    for (let i = 0; i < length; i++) {
       cursor.setNode(this.graph, templChildArray[i]);
       yield cursor;
     }
@@ -234,7 +236,7 @@ export class NodeCursor {
       cursor = NodeCursor.Get();
     }
     while (children.length) {
-      const childrenArray = children.shift()!;
+      const childrenArray = children.pop()!;
       if (!childrenArray) continue;
       for (let i = 0; i < childrenArray.length; i++) {
         cursor.setNode(this.graph, childrenArray[i]);
@@ -316,11 +318,13 @@ export class NodeCursor {
     if (this.childrenArray) {
       const templChildArray: number[] = NCSPools.numberArray.get() || [];
       const children = this.childrenArray;
-      for (let i = 0; i < children.length; i++) {
+      const length = children.length;
+      templChildArray.length = length;
+      for (let i = 0; i < length; i++) {
         templChildArray[i] = children[i];
       }
       const tempCursor = NodeCursor.Get();
-      for (let i = 0; i < templChildArray.length; i++) {
+      for (let i = 0; i < length; i++) {
         tempCursor.setNode(this.graph, templChildArray[i]);
         tempCursor.dispose();
       }
@@ -334,14 +338,15 @@ export class NodeCursor {
       tempCursor.removeChild(tempCursor.getChildIndex(this.index));
       tempCursor.returnCursor();
     }
+    const hadEvents = this.hasEvents;
+    const hadContexts = this.hasContexts;
+    const hadObservers = this.hasObservers;
+    const hadComponents = this.hasComponents;
+    const hadTags = this.hasTags;
+
     this.graph.removeNode(this.index);
-    this.clear(
-      this.hasEvents,
-      this.hasContexts,
-      this.hasObservers,
-      this.hasComponents,
-      this.hasTags
-    );
+
+    this.clear(hadEvents, hadContexts, hadObservers, hadComponents, hadTags);
   }
 
   hasChild(node: NodeCursor) {
@@ -355,7 +360,7 @@ export class NodeCursor {
   parentTo(nodeToParentTo: NodeCursor) {
     if (this.index == nodeToParentTo.index)
       throw new Error(
-        `NCS: Tried to parent node ${this.index} ${this.name} to itself`
+        `NCS: Tried to parent node ${this.index} ${this.name} to itself`,
       );
     if (nodeToParentTo.hasChild(this)) return;
     const tempCursor = NodeCursor.Get();
@@ -367,7 +372,7 @@ export class NodeCursor {
     this.parent = nodeToParentTo.index;
     this.hasObservers &&
       this.observers!.isParentedSet &&
-      nodeToParentTo.observers!.parented.notify(tempCursor);
+      this.observers!.parented.notify(tempCursor);
     tempCursor.returnCursor();
   }
 
@@ -409,9 +414,10 @@ export class NodeCursor {
   }
 
   removeChild(index: number) {
-    if (!this.childrenArray || !this.childrenArray[index]) return;
+    if (!this.childrenArray || this.childrenArray[index] === undefined) return;
 
     const child = this.childrenArray.splice(index, 1)![0];
+    this.arrays._parents[child] = -1;
     const tempCursor = NodeCursor.Get();
     tempCursor.setNode(this.graph, child);
 
@@ -443,7 +449,7 @@ export class NodeCursor {
   }
 
   returnCursor() {
-    return NodeCursor.Retrun(this);
+    return NodeCursor.Return(this);
   }
 
   cloneCursor(cursor?: NodeCursor) {

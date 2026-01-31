@@ -12,7 +12,7 @@ export class Tag {
   *traverseChildren(): Generator<Tag> {
     const children = [...this.children];
     while (children.length) {
-      const child = children.shift()!;
+      const child = children.pop()!;
       yield child;
       if (child.children.length) children.push(...child.children);
     }

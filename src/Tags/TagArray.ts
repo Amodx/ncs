@@ -17,7 +17,7 @@ export class TagArray {
   }
   addTag(node: number): number {
     let slot = this._freeSlots.length
-      ? this._freeSlots.shift()!
+      ? this._freeSlots.pop()!
       : this._node.length;
     this._node[slot] = node;
     this.observers.tagAdded.notify(slot);
