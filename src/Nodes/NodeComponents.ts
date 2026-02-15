@@ -27,7 +27,7 @@ export class NodeComponents {
     const components = this.components;
     const tempCursor = ComponentCursor.Get();
     for (let i = 0; i < components.length; i += 2) {
-      tempCursor.setInstance(this.node, components[i], components[i + 1]);
+      tempCursor.setInstance(this.node.index,this.node.graph, components[i], components[i + 1]);
       tempCursor.dispose();
     }
     tempCursor.returnCursor();
@@ -79,7 +79,7 @@ export class NodeComponents {
     compArray.observers.nodeAdded.notify(this.node.index);
     const temp = ComponentCursor.Get();
     if (this.node.hasObservers) {
-      temp.setInstance(this.node, typeId, componentIndex);
+      temp.setInstance(this.node.index,this.node.graph, typeId, componentIndex);
 
       this.node.observers.isComponentAddedSet &&
         this.node.observers.componentAdded.notify(temp);
@@ -107,7 +107,7 @@ export class NodeComponents {
 
     if (removeIndex == -1) return;
     const temp = ComponentCursor.Get();
-    temp.setInstance(this.node, numberId, removeComponentIndex);
+    temp.setInstance(this.node.index,this.node.graph, numberId, removeComponentIndex);
     this.components.splice(removeIndex, 2)!;
 
     if (this.node.hasObservers) {
@@ -134,15 +134,13 @@ export class NodeComponents {
   get(
     type: string,
     cursor = ComponentCursor.Get(),
-    nodeCursor = NodeCursor.Get()
   ): ComponentCursor<any, any, any> | null {
     const components = this.components;
     if (!components) return null;
     const numberId = NCSRegister.components.idPalette.getNumberId(type);
     for (let i = 0; i < components.length; i += 2) {
       if (components[i] == numberId) {
-        nodeCursor.setNode(this.node.graph, this.node.index);
-        cursor.setInstance(nodeCursor, numberId, components[i + 1]);
+        cursor.setInstance(this.node.index,this.node.graph, numberId, components[i + 1]);
         return cursor;
       }
     }
@@ -156,7 +154,7 @@ export class NodeComponents {
     for (let i = 0; i < components.length; i += 2) {
       if (components[i] == numberId) {
         const cursor = ComponentCursor.Get();
-        cursor.setInstance(this.node, components[i], components[i + 1]);
+        cursor.setInstance(this.node.index,this.node.graph, components[i], components[i + 1]);
         cursors.push(cursor);
       }
     }
@@ -169,7 +167,7 @@ export class NodeComponents {
     const tempCursor = ComponentCursor.Get();
     for (let i = components.length; i > 0; i -= 2) {
       if (components[i] == numberId) {
-        tempCursor.setInstance(this.node, components[i], components[i + 1]);
+        tempCursor.setInstance(this.node.index,this.node.graph, components[i], components[i + 1]);
         this.components.splice(i, 2)!;
         if (this.node.hasObservers) {
           this.node.observers.isComponentRemovedSet &&
@@ -185,14 +183,12 @@ export class NodeComponents {
 
   getChild(
     type: string,
-    cursor = ComponentCursor.Get(),
-    nodeCursor = NodeCursor.Get()
+    cursor = ComponentCursor.Get()
   ): ComponentCursor<any, any, any> | null {
     const tempCursor = NodeCursor.Get();
     for (const child of this.node.traverseChildren(tempCursor)) {
       if (!child.components) continue;
-      nodeCursor.setNode(this.node.graph, child.index);
-      const found = child.components.get(type, cursor, nodeCursor);
+      const found = child.components.get(type, cursor);
       if (found) {
         tempCursor.returnCursor();
         return found;
@@ -205,12 +201,11 @@ export class NodeComponents {
   getParent(
     type: string,
     cursor = ComponentCursor.Get(),
-    nodeCursor = NodeCursor.Get()
   ): ComponentCursor<any, any, any> | null {
     const tempCursor = NodeCursor.Get();
     for (const parent of this.node.traverseParents(tempCursor)) {
       if (!parent.components) continue;
-      const found = parent.components.get(type, cursor, nodeCursor);
+      const found = parent.components.get(type, cursor);
       if (found) {
         tempCursor.returnCursor();
         return found;

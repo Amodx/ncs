@@ -13,7 +13,6 @@ import {
 import { CreateComponentData } from "../Components/Component.types";
 import { NCSRegister } from "../Register/NCSRegister";
 export function serializeNodeData(data: CreateNodeData): SerializedNodeData {
-
   const nodeData: SerializedNodeData = {
     name: data[1],
   };
@@ -27,6 +26,7 @@ export function serializeNodeData(data: CreateNodeData): SerializedNodeData {
   if (data[2]) {
     nodeData.components = [];
     for (const comp of data[2]) {
+      if (!comp) continue;
       nodeData.components.push(serializeComponentData(comp));
     }
   }
@@ -39,6 +39,7 @@ export function serializeNodeData(data: CreateNodeData): SerializedNodeData {
   if (data[4]) {
     nodeData.children = [];
     for (const child of data[4]) {
+      if (!child) continue;
       nodeData.children.push(serializeNodeData(child));
     }
   }
@@ -95,14 +96,14 @@ export function cloneNode(node: NodeCursor): SerializedNodeData {
 export function createRemoteNode(
   node: NodeCursor,
   includeChildren = false,
-  includedComponents: { type: string }[] = []
+  includedComponents: { type: string }[] = [],
 ): CreateNodeData {
   let children: CreateNodeData[] | null = null;
   if (includeChildren) {
     children = [];
     for (const child of node.children()) {
       children.push(
-        createRemoteNode(child, includeChildren, includedComponents)
+        createRemoteNode(child, includeChildren, includedComponents),
       );
     }
   }

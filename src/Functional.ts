@@ -5,14 +5,14 @@ import { RegisteredTag } from "./Register/registerTag";
 
 export function Node(): CreateNodeData;
 export function Node(
-  components?: CreateComponentData[],
+  components?: (CreateComponentData|null)[],
   tags?: number[] | null,
   ...children: CreateNodeData[]
 ): CreateNodeData;
 
 export function Node(
   data: string,
-  components?: CreateComponentData[],
+  components?: (CreateComponentData|null)[],
   ...children: CreateNodeData[]
 ): CreateNodeData;
 
@@ -22,20 +22,20 @@ export function Node(
     name?: string;
     tags?: number[];
   },
-  components?: CreateComponentData[],
+  components?: (CreateComponentData|null)[],
   ...children: CreateNodeData[]
 ): CreateNodeData;
 
 export function Node(
   dataOrComponents?:
-    | CreateComponentData[]
+    | (CreateComponentData | null)[]
     | string
     | {
         id?: true;
         name?: string;
         tags?: number[];
       },
-  maybeComponentsOrChildren?: CreateComponentData[] | number[] | null,
+  maybeComponentsOrChildren?: (CreateComponentData | null)[] | number[] | null,
   ...restChildren: CreateNodeData[]
 ): CreateNodeData {
   if (typeof dataOrComponents == "string" && dataOrComponents == "")
@@ -55,7 +55,7 @@ export function Node(
         ? (maybeComponentsOrChildren as number[])
         : undefined,
       components,
-      children
+      children,
     );
   }
 
@@ -75,7 +75,7 @@ export function Node(
     dataOrComponents.name,
     dataOrComponents.tags,
     components,
-    restChildren
+    restChildren,
   );
 }
 

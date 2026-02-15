@@ -280,7 +280,7 @@ export class NodeCursor {
       cursor = ComponentCursor.Get();
     }
     for (let i = 0; i < components.length; i += 2) {
-      yield cursor.setInstance(this, components[i], components[i + 1]);
+      yield cursor.setInstance(this.index,this.graph, components[i], components[i + 1]);
     }
     if (usedTemp) cursor.returnCursor();
     return true;

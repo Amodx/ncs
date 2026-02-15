@@ -12,14 +12,16 @@ function createNode(graph: Graph, data: CreateNodeData, parent: number) {
   const newNode = graph._nodes.addNode(
     typeof data[0] == "string" ? NodeId.FromString(data[0]) : data[0],
     parent,
-    data[1]
+    data[1],
   );
   const nodeCursor = NodeCursor.Get();
   nodeCursor.setNode(graph, newNode);
 
   if (data[2]?.length) {
     for (let i = 0; i < data[2].length; i++) {
-      nodeCursor.components.add(data[2][i]);
+      const comp = data[2][i];
+      if (!comp) continue;
+      nodeCursor.components.add(comp);
     }
   }
   if (data[3]?.length) {
@@ -30,7 +32,9 @@ function createNode(graph: Graph, data: CreateNodeData, parent: number) {
 
   if (data[4]?.length) {
     for (let i = 0; i < data[4].length; i++) {
-      createNode(graph, data[4][i], newNode);
+      const node = data[4][i];
+      if (!node) continue;
+      createNode(graph, node, newNode);
     }
   }
   nodeCursor.setNode(graph, newNode);
@@ -85,11 +89,11 @@ export class Graph {
   addNode(
     data: CreateNodeData,
     parent: number = this.root.index,
-    cursor = NodeCursor.Get()
+    cursor = NodeCursor.Get(),
   ) {
     if (typeof parent !== "number")
       throw new Error(
-        `NCS: Passed in invalid parent ${parent} in graph.addNode`
+        `NCS: Passed in invalid parent ${parent} in graph.addNode`,
       );
     const newNode = createNode(this, data, parent);
     if (newNode.hasComponents) {

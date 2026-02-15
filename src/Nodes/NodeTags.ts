@@ -83,6 +83,7 @@ export class NodeTags {
   get(type: string, cursor = TagCursor.Get()): TagCursor | null {
     const tagId = NCSRegister.tags.idPalette.getNumberId(type);
     const tags = this.tags;
+    if (!this.tags) return null;
     for (let i = 0; i < tags.length; i += 2) {
       if (tags[i] == tagId) {
         cursor.setTag(this.node, tags[i], tags[i + 1]);

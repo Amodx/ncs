@@ -25,6 +25,7 @@ const tempData: any[] = [];
 
 export class SchemaView<Shape extends {} = any> {
   _dataPool = new ItemPool();
+  _cursorPool = new ItemPool<SchemaCursor<Shape>>();
 
   constructor(
     public schema: Schema<Shape>,
@@ -33,11 +34,15 @@ export class SchemaView<Shape extends {} = any> {
     public byteOffset: number[],
     public byteSize: number,
     public _createData: SchemaCreateData,
-    private _cursorClass: any
+    private _cursorClass: any,
   ) {}
 
   returnData(returnData: any) {
     this._dataPool.addItem(returnData);
+  }
+
+  returnCursor(cursor: SchemaCursor) {
+    this._cursorPool.addItem(cursor as any);
   }
 
   createData(overrides?: RecursivePartial<Shape> | null): any {
@@ -89,7 +94,7 @@ export class SchemaView<Shape extends {} = any> {
       const typedArray = new typedArrayClass(
         data.sharedMemory
           ? (new SharedArrayBuffer(byteSize) as any)
-          : new ArrayBuffer(byteSize)
+          : new ArrayBuffer(byteSize),
       );
       typedArray.set(baseData);
       return typedArray;
@@ -114,11 +119,16 @@ export class SchemaView<Shape extends {} = any> {
   }
 
   createCursor(): SchemaCursor<Shape> {
+    const pooled = this._cursorPool.get();
+    if (pooled) {
+      return pooled;
+    }
+
     return new this._cursorClass(
       this,
       this.meta,
       this._createData,
-      this.byteOffset
+      this.byteOffset,
     );
   }
 

@@ -4,17 +4,23 @@ import { NCSRegister } from "../Register/NCSRegister";
 import { NodeCursor } from "../Nodes/NodeCursor";
 import { ComponentArray } from "./ComponentArray";
 import { NCSPools } from "../Pools/NCSPools";
+import { Graph } from "Graphs/Graph";
 export class ComponentCursor<
   ComponentSchema extends object = {},
   Data extends any = any,
-  Shared extends any = any
+  Shared extends any = any,
 > {
   static Get() {
     const cursor = NCSPools.componentCursor.get();
     if (!cursor) return new ComponentCursor();
     return cursor;
   }
-  static Retrun(cursor: ComponentCursor) {
+  static Return(cursor: ComponentCursor) {
+    if (cursor.schema) {
+      cursor.schema.__view.returnCursor(cursor.schema);
+      (cursor as any).schema = null;
+    }
+    cursor._index = -1;
     return NCSPools.componentCursor.addItem(cursor);
   }
   /**The index of the parent node in the node array */
@@ -39,7 +45,7 @@ export class ComponentCursor<
     this.arrays._data[this._index] = data;
   }
 
-  public node: NodeCursor;
+  public node= NodeCursor.Get();
   public arrays: ComponentArray;
   public __proto: ComponentRegisterData<ComponentSchema, Data, Shared>;
 
@@ -50,41 +56,45 @@ export class ComponentCursor<
   private _type = 0;
 
   private constructor() {}
-  setInstance(node: NodeCursor, type: number, index: number) {
+  setInstance(nodeIndex: number,graph:Graph, type: number, index: number) {
     this._index = index;
     this._type = type;
-    this.node = node;
+    this.node.setNode(graph,nodeIndex);
     this.__proto = NCSRegister.components.items[this._type];
 
-    this.arrays = node.graph._components[type];
+    this.arrays = graph._components[type];
 
     if (this.arrays?.schemaArray?._data[index] !== undefined) {
       this.schema = this.arrays.schemaArray.createViewCursor(index);
       this.schema.setInstance(index);
+    } else {
+      (this as any).schema = null;
     }
     return this;
   }
 
   get isDisposed() {
+    if (this._index == -1) return true;
     return this.arrays._disposed[this._index];
   }
   dispose() {
     if (this.__proto.dispose) this.__proto.dispose(this);
     this.arrays.removeComponent(this._index);
+    this._index = -1;
   }
 
   returnCursor() {
-    return ComponentCursor.Retrun(this);
+    return ComponentCursor.Return(this);
   }
   cloneCursor(
     cursor?: ComponentCursor,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared> {
     const newCursor = cursor || ComponentCursor.Get();
     const newNodeCursor = nodeCursor || NodeCursor.Get();
     newNodeCursor.setNode(this.node.graph, this.node.index);
 
-    newCursor.setInstance(newNodeCursor, this.typeId, this._index);
+    newCursor.setInstance(newNodeCursor.index,newNodeCursor.graph, this.typeId, this._index);
     return newCursor as any;
   }
 

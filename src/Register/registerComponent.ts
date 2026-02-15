@@ -144,7 +144,7 @@ export const registerComponent = <
       if (!array) return false;
       for (let i = 0; i < array._disposed.length; i++) {
         nodeCursor.setNode(graph, array._node[i]);
-        cursor.setInstance(nodeCursor, typeId, i);
+        cursor.setInstance(nodeCursor.index,graph, typeId, i);
         yield cursor;
       }
       return true;
@@ -158,7 +158,7 @@ export const registerComponent = <
       const newComponent = node.components.add(
         createComponent(schema, schemaView)
       );
-      cursor.setInstance(node, typeId, newComponent);
+      cursor.setInstance(node.index,node.graph, typeId, newComponent);
       node.graph._components[typeId].init(newComponent);
       return cursor;
     },
@@ -166,14 +166,14 @@ export const registerComponent = <
       return node.components.has(data.type);
     },
     get(node: NodeCursor, cursor?: ComponentCursor, nodeCursor?: NodeCursor) {
-      return node.components.get(data.type, cursor, nodeCursor);
+      return node.components.get(data.type, cursor);
     },
     getRequired(
       node: NodeCursor,
       cursor?: ComponentCursor,
       nodeCursor?: NodeCursor
     ) {
-      const found = node.components.get(data.type, cursor, nodeCursor);
+      const found = node.components.get(data.type, cursor);
       if (!found)
         throw new Error(
           `NCS: Node [${node.name}] does not have required component [${data.type}].`
@@ -185,14 +185,14 @@ export const registerComponent = <
       cursor?: ComponentCursor,
       nodeCursor?: NodeCursor
     ) {
-      return node.components.getChild(data.type, cursor, nodeCursor);
+      return node.components.getChild(data.type, cursor);
     },
     getRequiredChild(
       node: NodeCursor,
       cursor?: ComponentCursor,
       nodeCursor?: NodeCursor
     ) {
-      const comp = node.components.getChild(data.type, cursor, nodeCursor);
+      const comp = node.components.getChild(data.type, cursor);
       if (!comp)
         throw new Error(
           `NCS: Node [${node.name}] does not have a child with required component [${data.type}].`
@@ -204,14 +204,14 @@ export const registerComponent = <
       cursor?: ComponentCursor,
       nodeCursor?: NodeCursor
     ) {
-      return node.components.getParent(data.type, cursor, nodeCursor);
+      return node.components.getParent(data.type, cursor);
     },
     getRequiredParent(
       node: NodeCursor,
       cursor?: ComponentCursor,
       nodeCursor?: NodeCursor
     ) {
-      const comp = node.components.getParent(data.type, cursor, nodeCursor);
+      const comp = node.components.getParent(data.type, cursor);
       if (!comp)
         throw new Error(
           `NCS: Node [${node.name}] does not have a parent with required component [${data.type}].`

@@ -12,7 +12,7 @@ export type CreateNodeData = [
   /**
    * The components of the node.
    */
-  components: CreateComponentData[] | null,
+  components: (CreateComponentData | null)[] | null,
   /**
    * The tags of the node.
    */
@@ -20,7 +20,7 @@ export type CreateNodeData = [
   /**
    * The children nodes of the node.
    */
-  children: CreateNodeData[] | null,
+  children: (CreateNodeData | null)[] | null,
 ];
 
 export enum NodeObserverIds {

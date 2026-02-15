@@ -79,7 +79,8 @@ export class ComponentArray {
     for (let i = 0; i < this._disposed.length; i++) {
       if (this._disposed[i]) continue;
       this._componentCursor.setInstance(
-        this._nodeCursor.setNode(this.graph, this._node[i]),
+        this._node[i],
+        this.graph,
         this.numberTypeId,
         i,
       );
@@ -94,14 +95,7 @@ export class ComponentArray {
     const cursor = !this.proto.performance?.useReusableCursor
       ? ComponentCursor.Get()
       : this._componentCursor;
-    const nodeCursor = !this.proto.performance?.useReusableCursor
-      ? NodeCursor.Get()
-      : this._nodeCursor;
-    cursor.setInstance(
-      nodeCursor.setNode(this.graph, this._node[index]),
-      this.numberTypeId,
-      index,
-    );
+    cursor.setInstance(this._node[index], this.graph, this.numberTypeId, index);
 
     init(cursor);
 
