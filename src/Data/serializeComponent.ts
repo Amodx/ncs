@@ -18,7 +18,7 @@ export function serializeComponent(
 ): SerializedComponentData {
   return {
     type: component.type,
-    ...(component.schema?.__cursor?.data ? { schema: component.schema.toJSON() } : {}),
+    ...(component.schema?.__cursor?._cachedData ? { schema: component.schema.toJSON() } : {}),
     ...(component.schema?.__view && component.schema?.__view.id !== "default"
       ? { schemaViewId: component.schema.__view.id }
       : {}),

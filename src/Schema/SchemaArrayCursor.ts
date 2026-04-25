@@ -4,18 +4,12 @@ import { SchemaArray } from "./SchemaArray";
 
 export class SchemaArrayCursor {
   constructor(public schemaArray: SchemaArray) {}
-
-  get data() {
-    return this.schemaArray._data[this._index];
-  }
-  set data(value: any) {
-    this.schemaArray._data[this._index] = value;
-  }
-
+  _cachedData: any | null = null;
   _index = 0;
 
   setIndex(index: number) {
     this._index = index;
+    this._cachedData = this.schemaArray._data[index] ?? null;
   }
   getObserver(propertyIndex: number): Observable<any> | null {
     return this.schemaArray.getObserver(propertyIndex, this._index);
@@ -56,7 +50,7 @@ export class SchemaArrayCursor {
   setProxy<T extends Record<string | number, any> = {}>(
     propertyIndex: number,
     object: T,
-    key: keyof T
+    key: keyof T,
   ) {
     return this.schemaArray.setProxy(propertyIndex, this._index, object, key);
   }

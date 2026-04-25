@@ -29,6 +29,7 @@ export class NodeArray {
   _components: number[][] = [];
   _tags: number[][] = [];
   _context: number[][] = [];
+  _beingDisposed: boolean[] = [];
   _disposed: boolean[] = [];
   _enabled: boolean[] = [];
   _hasObservers: boolean[] = [];
@@ -46,7 +47,7 @@ export class NodeArray {
     this._disposed[slot] = false;
     this._enabled[slot] = true;
     this._hasObservers[slot] = false;
-
+    this._beingDisposed[slot] = false;
     return slot;
   }
   removeNode(slot: number) {
@@ -58,6 +59,7 @@ export class NodeArray {
     this._disposed[slot] = true;
     this._enabled[slot] = false;
     this._hasObservers[slot] = false;
+    this._beingDisposed[slot] = false;
     for (let j = 0; j < observerValues.length; j++) {
       const key = observerValues[j];
       const observer = this._observers[key]?.[slot];

@@ -14,7 +14,12 @@ export class ContextCursor<
     if (!cursor) return new ContextCursor();
     return cursor;
   }
-  static Retrun(cursor: ContextCursor) {
+  static Return(cursor: ContextCursor) {
+    if (cursor.schema) {
+      cursor.schema.__view.returnCursor(cursor.schema);
+      (cursor as any).schema = null;
+    }
+    cursor._index = -1;
     return NCSPools.contextCursor.addItem(cursor);
   }
   proto: ContextRegisterData<ContextSchema, Data>;
@@ -35,7 +40,7 @@ export class ContextCursor<
   }
   get type() {
     return NCSRegister.contexts.idPalette.getStringId(
-      this.arrays._type[this._index]
+      this.arrays._type[this._index],
     );
   }
 
@@ -55,5 +60,9 @@ export class ContextCursor<
 
   dispose() {
     this.arrays.removeContext(this._index);
+  }
+
+  returnCursor() {
+    return ContextCursor.Return(this);
   }
 }

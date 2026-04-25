@@ -30,7 +30,7 @@ export class NodeContext {
       defaultCursor.setContext(this.node, context[i]);
       defaultCursor.dispose();
     }
-    ContextCursor.Retrun(defaultCursor);
+    defaultCursor.returnCursor();
   }
 
   add(contextData: CreateContextData) {
@@ -57,7 +57,7 @@ export class NodeContext {
             .getView(contextData[2] || "default")!
             .createData(contextData[1])
         : null,
-      contextData[3]
+      contextData[3],
     );
     context.push(newContext);
     cursor.setContext(this.node, newContext);
@@ -66,7 +66,7 @@ export class NodeContext {
     contextData[2] = null;
     contextData[3] = null;
     NCSPools.createContextData.addItem(contextData);
-    ContextCursor.Retrun(cursor);
+    cursor.returnCursor();
 
     return newContext;
   }
@@ -84,11 +84,11 @@ export class NodeContext {
             break;
           }
         }
-        ContextCursor.Retrun(cursor);
+        cursor.returnCursor();
         return true;
       }
     }
-    ContextCursor.Retrun(cursor);
+    cursor.returnCursor();
     return false;
   }
 
@@ -111,15 +111,14 @@ export class NodeContext {
         for (let i = 0; i < context.length; i++) {
           cursor.setContext(parent, context[i]);
           if (cursor.type == type) {
-            //@todo add anchor
             cursor.setContext(parent, context[i]);
-
             return cursor;
           }
         }
       }
     }
-    NodeCursor.Return(parentCursor);
+    parentCursor.returnCursor();
+    cursor.returnCursor();
     return null;
   }
 }

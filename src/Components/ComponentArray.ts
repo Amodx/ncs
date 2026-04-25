@@ -5,6 +5,8 @@ import { ComponentRegisterData } from "./Component.types";
 import { NodeCursor } from "../Nodes/NodeCursor";
 import { ComponentCursor } from "./ComponentCursor";
 import { Graph } from "../Graphs/Graph";
+import { ItemPool } from "../Util/ItemPool";
+import { GraphClock } from "../Graphs/GraphClock";
 type ComponentObserverData = [type: number, index: number];
 const componentObserverData: ComponentObserverData = [0, 0];
 class ComponentArrayObservers {
@@ -21,11 +23,11 @@ export class ComponentArray {
   _data: any[] = [];
 
   schemaArray: SchemaArray;
+  dataPool = new ItemPool<any>();
 
   proto: ComponentRegisterData;
   observers = new ComponentArrayObservers();
 
-  private _nodeCursor: NodeCursor;
   private _componentCursor: ComponentCursor;
   constructor(
     public graph: Graph,
@@ -36,8 +38,8 @@ export class ComponentArray {
     )!;
     if (proto.schema) this.schemaArray = proto.schema.array;
     this.proto = proto;
-    this._nodeCursor = NodeCursor.Get();
     this._componentCursor = ComponentCursor.Get();
+    this._componentCursor._returnable = false;
   }
   addComponent(
     node: number,
@@ -73,18 +75,21 @@ export class ComponentArray {
     return nodeIndex;
   }
 
-  update(delta: number) {
+  update(clock: GraphClock) {
     const update = this.proto.update;
     if (!update) return;
     for (let i = 0; i < this._disposed.length; i++) {
-      if (this._disposed[i]) continue;
-      this._componentCursor.setInstance(
-        this._node[i],
-        this.graph,
-        this.numberTypeId,
-        i,
-      );
-      update(this._componentCursor, delta);
+      const node = this._node[i];
+
+      if (
+        this._disposed[i] ||
+        this.graph._nodes._disposed[node] ||
+        this.graph._nodes._beingDisposed[node] ||
+        node < 0
+      )
+        continue;
+      this._componentCursor.setInstance(node, this.graph, this.numberTypeId, i);
+      update(this._componentCursor, clock);
     }
   }
 

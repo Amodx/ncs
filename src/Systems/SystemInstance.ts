@@ -2,19 +2,23 @@ import { Graph } from "../Graphs/Graph";
 import { SystemRegisterData } from "./System.types";
 import { QueryInstance } from "../Queries/QueryInstance";
 import { NodeCursor } from "../Nodes/NodeCursor";
+import { GraphClock } from "../Graphs/GraphClock";
 
 export class SystemInstance {
   queries: QueryInstance[] = [];
   node = NodeCursor.Get();
-  constructor(public graph: Graph, public proto: SystemRegisterData) {
+  constructor(
+    public graph: Graph,
+    public proto: SystemRegisterData,
+  ) {
     for (const query of proto.queries) {
       this.queries.push(query.add(graph));
     }
     this.graph._systems.push(this);
   }
 
-  update(delta: number) {
-    this.proto.update(this, delta);
+  update(clock: GraphClock) {
+    this.proto.update(this, clock);
   }
 
   dispose() {

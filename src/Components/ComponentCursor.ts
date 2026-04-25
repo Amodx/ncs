@@ -4,7 +4,9 @@ import { NCSRegister } from "../Register/NCSRegister";
 import { NodeCursor } from "../Nodes/NodeCursor";
 import { ComponentArray } from "./ComponentArray";
 import { NCSPools } from "../Pools/NCSPools";
-import { Graph } from "Graphs/Graph";
+import { Graph } from "../Graphs/Graph";
+import { ItemPool } from "../Util/ItemPool";
+import { GraphClock } from "../Graphs/GraphClock";
 export class ComponentCursor<
   ComponentSchema extends object = {},
   Data extends any = any,
@@ -38,6 +40,7 @@ export class ComponentCursor<
     return this.__proto.shared!;
   }
   schema: SchemaCursor<ComponentSchema>;
+
   get data(): Data {
     return this.arrays._data[this._index];
   }
@@ -45,7 +48,11 @@ export class ComponentCursor<
     this.arrays._data[this._index] = data;
   }
 
-  public node= NodeCursor.Get();
+  get dataPool() {
+    return this.arrays.dataPool as ItemPool<Data>;
+  }
+
+  public node = NodeCursor.Get();
   public arrays: ComponentArray;
   public __proto: ComponentRegisterData<ComponentSchema, Data, Shared>;
 
@@ -56,10 +63,11 @@ export class ComponentCursor<
   private _type = 0;
 
   private constructor() {}
-  setInstance(nodeIndex: number,graph:Graph, type: number, index: number) {
+  _returnable = true;
+  setInstance(nodeIndex: number, graph: Graph, type: number, index: number) {
     this._index = index;
     this._type = type;
-    this.node.setNode(graph,nodeIndex);
+    this.node.setNode(graph, nodeIndex);
     this.__proto = NCSRegister.components.items[this._type];
 
     this.arrays = graph._components[type];
@@ -74,16 +82,21 @@ export class ComponentCursor<
   }
 
   get isDisposed() {
-    if (this._index == -1) return true;
+    if (this._index == -1 || this.nodeIndex == -1) return true;
     return this.arrays._disposed[this._index];
   }
   dispose() {
     if (this.__proto.dispose) this.__proto.dispose(this);
     this.arrays.removeComponent(this._index);
     this._index = -1;
+    this.node.clear(true,true,true,true,true);
   }
 
   returnCursor() {
+    if (!this._returnable)
+      throw new Error(
+        `Tried to return component cursor that cannot be returned`,
+      );
     return ComponentCursor.Return(this);
   }
   cloneCursor(
@@ -94,11 +107,16 @@ export class ComponentCursor<
     const newNodeCursor = nodeCursor || NodeCursor.Get();
     newNodeCursor.setNode(this.node.graph, this.node.index);
 
-    newCursor.setInstance(newNodeCursor.index,newNodeCursor.graph, this.typeId, this._index);
+    newCursor.setInstance(
+      newNodeCursor.index,
+      newNodeCursor.graph,
+      this.typeId,
+      this._index,
+    );
     return newCursor as any;
   }
 
-  update(delta: number) {
-    this.__proto.update && this.__proto.update(this, delta);
+  update(graphClock: GraphClock) {
+    this.__proto.update && this.__proto.update(this, graphClock);
   }
 }

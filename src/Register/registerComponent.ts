@@ -102,6 +102,9 @@ export const registerComponent = <
 >(
   data: ComponentRegisterData<ComponentSchema, Data, Shared>
 ): RegisteredComponent<ComponentSchema, Data, Shared> => {
+  if(NCSRegister.components.has(data.type)){
+    console.error(`Component of type: ${data.type} is already registered`);
+  }
   const typeId = NCSRegister.components.register(data.type, data);
 
   data.shared = data.shared || ({} as Shared);
@@ -112,7 +115,7 @@ export const registerComponent = <
     const createData: CreateComponentData<ComponentSchema> =
       NCSPools.createComponentData.get() || ([] as any);
     createData[0] = data.type;
-    createData[1] = schema || {};
+    createData[1] = schema || null;
     createData[2] = schemaView || "default";
 
     return createData;
@@ -165,13 +168,12 @@ export const registerComponent = <
     has(node: NodeCursor) {
       return node.components.has(data.type);
     },
-    get(node: NodeCursor, cursor?: ComponentCursor, nodeCursor?: NodeCursor) {
+    get(node: NodeCursor, cursor?: ComponentCursor) {
       return node.components.get(data.type, cursor);
     },
     getRequired(
       node: NodeCursor,
-      cursor?: ComponentCursor,
-      nodeCursor?: NodeCursor
+      cursor?: ComponentCursor
     ) {
       const found = node.components.get(data.type, cursor);
       if (!found)

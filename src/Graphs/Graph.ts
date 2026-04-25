@@ -7,6 +7,7 @@ import { ContextArray } from "../Contexts/ContextArray";
 import { TagArray } from "../Tags/TagArray";
 import { NCSPools } from "../Pools/NCSPools";
 import { SystemInstance } from "../Systems/SystemInstance";
+import { GraphClock } from "./GraphClock";
 
 function createNode(graph: Graph, data: CreateNodeData, parent: number) {
   const newNode = graph._nodes.addNode(
@@ -120,20 +121,17 @@ export class Graph {
     if (!node) return false;
     return true;
   }
-  private _lastTime = 0;
+
+  clock = new GraphClock();
   update() {
-    if (this._lastTime == 0) {
-      this._lastTime = performance.now();
-      return;
-    }
-    const current = performance.now();
-    const delta = current - this._lastTime;
-    this._lastTime = current;
+    this.clock.update();
+    if (!this.clock.delta) return;
+
     for (let i = 0; i < this._updatingComponents.length; i++) {
-      this._updatingComponents[i].update(delta);
+      this._updatingComponents[i].update(this.clock);
     }
     for (let i = 0; i < this._systems.length; i++) {
-      this._systems[i].update(delta);
+      this._systems[i].update(this.clock);
     }
   }
 }

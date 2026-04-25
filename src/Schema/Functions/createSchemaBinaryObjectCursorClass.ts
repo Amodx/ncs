@@ -77,7 +77,7 @@ export function setBinaryObjectData(
   current: BinaryObjectSchemaView,
   meta: PropertyMetaData,
   index: number,
-  value: number
+  value: number,
 ) {
   if (!meta.binary) return undefined;
   if (typeof meta.binary == "object")
@@ -87,7 +87,7 @@ export function setBinaryObjectData(
 export function getBinaryObjectData(
   current: BinaryObjectSchemaView,
   meta: PropertyMetaData,
-  index: number
+  index: number,
 ): any {
   if (!meta.binary) return undefined;
   if (typeof meta.binary == "object")
@@ -107,9 +107,9 @@ function traverse(parent: any, properties: Property[]) {
             return this.__cursor.fetchProxyData(index);
           }
           return getBinaryObjectData(
-            this.__cursor.data,
+            this.__cursor._cachedData,
             this.__view.meta[index],
-            this.__view.byteOffset![index]
+            this.__view.byteOffset![index],
           );
         },
         set(this: SchemaCursorClassBase, value: any) {
@@ -119,16 +119,16 @@ function traverse(parent: any, properties: Property[]) {
             const oldVale = proxy
               ? this.__cursor.fetchProxyData(index)
               : getBinaryObjectData(
-                  this.__cursor.data,
+                  this.__cursor._cachedData,
                   this.__view.meta[index],
-                  this.__view.byteOffset![index]
+                  this.__view.byteOffset![index],
                 );
             if (oldVale != value) {
               setBinaryObjectData(
-                this.__cursor.data,
+                this.__cursor._cachedData,
                 this.__view.meta[index],
                 this.__view.byteOffset![index],
-                value
+                value,
               );
               if (proxy) {
                 this.__cursor.setProxyData(index, value);
@@ -138,10 +138,10 @@ function traverse(parent: any, properties: Property[]) {
             }
           }
           setBinaryObjectData(
-            this.__cursor.data,
+            this.__cursor._cachedData,
             this.__view.meta[index],
             this.__view.byteOffset![index],
-            value
+            value,
           );
           if (proxy) {
             this.__cursor.setProxyData(index, value);
@@ -150,11 +150,12 @@ function traverse(parent: any, properties: Property[]) {
       });
       continue;
     }
+
     class SchemaCursorProperty {
       constructor(
         public __cursor: SchemaArrayCursor,
         public __cursors: SchemaCursorClassBase[],
-        public __view: SchemaView
+        public __view: SchemaView,
       ) {}
     }
     traverse(SchemaCursorProperty, property.children!);
@@ -165,7 +166,7 @@ function traverse(parent: any, properties: Property[]) {
           v = new SchemaCursorProperty(
             this.__cursor,
             this.__cursors,
-            this.__view
+            this.__view,
           );
           this.__cursors[index] = v;
         }

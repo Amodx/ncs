@@ -4,7 +4,6 @@ import { Schema } from "../Schema";
 import { createBaseSchemaCursor } from "./createBaseSchemaCursor";
 import { SchemaArray } from "../../Schema/SchemaArray";
 import { SchemaArrayCursor } from "../SchemaArrayCursor";
-
 function traverse(parent: any, properties: Property[]) {
   for (let i = 0; i < properties.length; i++) {
     const property = properties[i];
@@ -15,17 +14,17 @@ function traverse(parent: any, properties: Property[]) {
           if (this.__cursor.hasProxy(index)) {
             return this.__cursor.fetchProxyData(index);
           }
-          return this.__cursor.data[index];
+          return this.__cursor._cachedData[index];
         },
-        set(this: SchemaCursorClassBase, value: any) {  
+        set(this: SchemaCursorClassBase, value: any) {
           let obs = this.__cursor.getObserver(index);
           let proxy = this.__cursor.hasProxy(index);
           if (obs) {
             const oldVale = proxy
               ? this.__cursor.fetchProxyData(index)
-              : this.__cursor.data[index];
+              : this.__cursor._cachedData[index];
             if (oldVale != value) {
-              this.__cursor.data[index] = value;
+              this.__cursor._cachedData[index] = value;
               if (proxy) {
                 this.__cursor.setProxyData(index, value);
               }
@@ -33,7 +32,7 @@ function traverse(parent: any, properties: Property[]) {
               return;
             }
           }
-          this.__cursor.data[index] = value;
+          this.__cursor._cachedData[index] = value;
           if (proxy) {
             this.__cursor.setProxyData(index, value);
           }
@@ -44,7 +43,7 @@ function traverse(parent: any, properties: Property[]) {
     class SchemaCursorProperty {
       constructor(
         public __cursor: SchemaArrayCursor,
-        public __cursors: SchemaCursorClassBase[]
+        public __cursors: SchemaCursorClassBase[],
       ) {}
     }
     traverse(SchemaCursorProperty, property.children!);

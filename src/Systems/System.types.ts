@@ -1,3 +1,4 @@
+import { GraphClock } from "../Graphs/GraphClock";
 import { QueryPrototype } from "../Queries/QueryPrototype";
 import { SystemInstance } from "./SystemInstance";
 
@@ -13,5 +14,5 @@ export type SystemRegisterData = {
   /**
    * The update function  of the system.
    */
-  update(system: SystemInstance, delta: number): void;
+  update(system: SystemInstance, clock: GraphClock): void;
 };

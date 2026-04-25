@@ -24,7 +24,7 @@ import { IdPalette } from "../Util/IdPalette";
 const traverseCreate = (
   parent: Property,
   properties: PropertyData[],
-  index: number
+  index: number,
 ): number => {
   parent.children ??= [];
   for (let i = 0; i < properties.length; i++) {
@@ -32,13 +32,14 @@ const traverseCreate = (
 
     if (
       typeof data.value == "object" &&
+      data.value !== null &&
       !data.children?.length &&
       !Array.isArray(data.value)
     ) {
       data.children ??= [];
       for (const key in data.value) {
         const value = data.value[key];
-        const meta = structuredClone(data.meta || {});
+        const meta = data.meta || {};
         meta.child = true;
         data.children!.push({
           id: key,
@@ -85,13 +86,13 @@ const buildBinaryData = (meta: PropertyMetaData[]) => {
 const traverseArray = (
   parent: Property,
   data: any[],
-  meta: PropertyMetaData[]
+  meta: PropertyMetaData[],
 ) => {
   for (let i = 0; i < parent.children!.length; i++) {
     const property = parent.children![i];
     if (!property.children) {
-      data[Number(property.index)] = structuredClone(property.value);
-      property.meta && (meta[property.index] = structuredClone(property.meta));
+      data[Number(property.index)] = property.value;
+      property.meta && (meta[property.index] = property.meta);
     } else {
       traverseArray(property, data, meta);
     }
@@ -102,7 +103,7 @@ const traverseArray = (
 function buildMeta(
   data: any[],
   meta: PropertyMetaData[],
-  metaOverrides: SchemaMetaOverrideData
+  metaOverrides: SchemaMetaOverrideData,
 ) {
   let newMeta = [...meta];
   for (let i = 0; i < data.length; i++) {
@@ -115,13 +116,13 @@ function buildMeta(
 function traverseCreateFromObject(object: any, property: PropertyData) {
   for (const id in object) {
     const value = object[id];
-    if (typeof value == "object") {
+    if (typeof value == "object" && value !== null) {
       property.children!.push(
         traverseCreateFromObject(value, {
           id,
           value: {},
           children: [],
-        })
+        }),
       );
     } else {
       property.children!.push({
@@ -161,7 +162,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
             id,
             value: {},
             children: [],
-          })
+          }),
         );
       } else {
         data.push({
@@ -178,7 +179,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
       meta: {},
       value: {},
     },
-    -1
+    -1,
   );
   private _objectCursorClass: any;
   private _typedArrayCursorClass: any;
@@ -203,10 +204,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
 
   createData(newData: any[] = [], overrides: RecursivePartial<Shape>) {
     for (let i = 0; i < this._data.length; i++) {
-      newData[i] =
-        typeof this._data[i] == "object"
-          ? structuredClone(this._data[i])
-          : this._data[i];
+      newData[i] = this._data[i];
     }
     traverseCreateData(this.root, newData, overrides);
     return newData;
@@ -231,7 +229,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
         [],
         0,
         data,
-        this._objectCursorClass
+        this._objectCursorClass,
       );
     }
     if (data.type == "typed-array") {
@@ -245,7 +243,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
         [],
         0,
         data,
-        this._typedArrayCursorClass
+        this._typedArrayCursorClass,
       );
     }
     if (data.type == "binary-object") {
@@ -261,7 +259,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
         byteOffsets,
         byteSize,
         data,
-        this._binaryObjectCursorClass
+        this._binaryObjectCursorClass,
       );
     }
     if (!view) throw new Error(`NCS: Invalid data`);
@@ -272,7 +270,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
 
   createObjectView(
     id: string,
-    meta: SchemaMetaOverrideData | null = null
+    meta: SchemaMetaOverrideData | null = null,
   ): SchemaView<Shape> {
     return this.createView({
       id,
@@ -284,7 +282,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
   createBinaryObjectView(
     id: string,
     sharedMemory: boolean = false,
-    meta: SchemaMetaOverrideData | null = null
+    meta: SchemaMetaOverrideData | null = null,
   ): SchemaView<Shape> {
     return this.createView({
       id,
@@ -298,7 +296,7 @@ export class Schema<Shape extends Record<string, any> = {}> {
     id: string,
     arrayType: BinaryPropertyTypes,
     sharedMemory: boolean = false,
-    meta: SchemaMetaOverrideData | null = null
+    meta: SchemaMetaOverrideData | null = null,
   ): SchemaView<Shape> {
     return this.createView({
       id,

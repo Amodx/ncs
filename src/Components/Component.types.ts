@@ -1,6 +1,7 @@
 import { Schema } from "../Schema/Schema";
 import { ComponentCursor } from "./ComponentCursor";
 import { RecursivePartial } from "../Util/Util.types";
+import { GraphClock } from "../Graphs/GraphClock";
 
 export type CreateComponentData<ComponentSchema extends object = any> = [
   /**
@@ -86,7 +87,7 @@ export type ComponentRegisterData<
    * @param component - The instance of the component being updated.
    * @param delta - The time since the last update
    */
-  update?(component: ComponentCursor<ComponentSchema, Data, Shared>,delta:number): void;
+  update?(component: ComponentCursor<ComponentSchema, Data, Shared>,clock:GraphClock): void;
 
   /**
    * Optional disposal function for the component.

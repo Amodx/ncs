@@ -81,9 +81,8 @@ export function Node(
 
 export function Tag(id: string, ...children: RegisteredTag[]) {
   const tag = NCS.registerTag({ id });
-
-  children.forEach((_) => {
-    tag.tag.addChild(_.tag);
-  });
+  for(const child of children){
+    tag.tag.addChild(child.tag);
+  }
   return tag;
 }

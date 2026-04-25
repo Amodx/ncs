@@ -280,7 +280,12 @@ export class NodeCursor {
       cursor = ComponentCursor.Get();
     }
     for (let i = 0; i < components.length; i += 2) {
-      yield cursor.setInstance(this.index,this.graph, components[i], components[i + 1]);
+      yield cursor.setInstance(
+        this.index,
+        this.graph,
+        components[i],
+        components[i + 1],
+      );
     }
     if (usedTemp) cursor.returnCursor();
     return true;
@@ -304,6 +309,7 @@ export class NodeCursor {
 
   dispose() {
     if (this.isDisposed) return;
+    this.graph._nodes._beingDisposed[this._index] = true;
     this.hasObservers &&
       this.observers!.isDisposedSet &&
       this.observers!.disposed.notify(this);

@@ -21,11 +21,10 @@ function traverseCreateJSON(parent: Property, target: any, source: any) {
   return target;
 }
 
-const tempData: any[] = [];
-
 export class SchemaView<Shape extends {} = any> {
   _dataPool = new ItemPool();
   _cursorPool = new ItemPool<SchemaCursor<Shape>>();
+  private _tempData: any[] = [];
 
   constructor(
     public schema: Schema<Shape>,
@@ -47,19 +46,16 @@ export class SchemaView<Shape extends {} = any> {
 
   createData(overrides?: RecursivePartial<Shape> | null): any {
     const data = this._createData;
-    overrides && (tempData.length = 0);
+    overrides && (this._tempData.length = 0);
     let baseData = !overrides
       ? this.schema._data
-      : this.schema.createData(tempData, overrides);
+      : this.schema.createData(this._tempData, overrides);
 
     if (this._dataPool.items.length) {
       const newData = this._dataPool.get()! as any;
       if (data.type == "object") {
         for (let i = 0; i < baseData.length; i++) {
-          newData[i] =
-            typeof baseData[i] == "object"
-              ? structuredClone(baseData[i])
-              : baseData[i];
+          newData[i] = baseData[i];
         }
         return newData;
       }
@@ -80,10 +76,7 @@ export class SchemaView<Shape extends {} = any> {
     if (data.type == "object") {
       const newData: any[] = new Array(baseData.length);
       for (let i = 0; i < baseData.length; i++) {
-        newData[i] =
-          typeof baseData[i] == "object"
-            ? structuredClone(baseData[i])
-            : baseData[i];
+        newData[i] = baseData[i];
       }
       return newData;
     }
@@ -135,13 +128,13 @@ export class SchemaView<Shape extends {} = any> {
   /** Converts data for use of remote components */
   toRemote(cursor: SchemaCursor<Shape>): any {
     if (this._createData.type == "object") {
-      return cursor.__cursor.data;
+      return cursor.__cursor._cachedData;
     }
     if (this._createData.type == "typed-array") {
-      return cursor.__cursor.data;
+      return cursor.__cursor._cachedData;
     }
     if (this._createData.type == "binary-object") {
-      return cursor.__cursor.data.buffer;
+      return cursor.__cursor._cachedData.buffer;
     }
   }
   /** Converts data for remote data to local data*/
