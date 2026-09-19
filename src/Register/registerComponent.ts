@@ -13,7 +13,8 @@ import { ComponentCursor } from "../Components/ComponentCursor";
 import { SchemaCursor } from "../Schema/Schema.types";
 import { NodeCursor } from "../Nodes/NodeCursor";
 import { NCSPools } from "../Pools/NCSPools";
-import { Nullable } from "Util/Util.types";
+import { Nullable } from "../Util/Util.types";
+import { CreateNodeData } from "../Nodes/Node.types";
 
 type RegisteredComponent<
   ComponentSchema extends object = any,
@@ -22,67 +23,87 @@ type RegisteredComponent<
 > = (ComponentRegisterData<ComponentSchema, Data, Shared> & {
   getNodes(grpah: Graph): Generator<NodeCursor>;
   getComponents(
-    grpah: Graph
+    grpah: Graph,
   ): Generator<ComponentCursor<ComponentSchema, Data, Shared>>;
   set(
     node: NodeCursor,
     componentSchema?: Nullable<Partial<ComponentSchema>>,
     schemaCursor?: Nullable<SchemaCursor<ComponentSchema>>,
-    cursor?: ComponentCursor<ComponentSchema, Data, Shared>
+    cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
   ): ComponentCursor<ComponentSchema, Data, Shared>;
   has(node: NodeCursor): boolean;
   get(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared> | null;
   getRequired(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared>;
   getChild(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared> | null;
   getRequiredChild(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared>;
   getParent(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared> | null;
   getRequiredParent(
     node: NodeCursor,
     cursor?: ComponentCursor<ComponentSchema, Data, Shared>,
-    nodeCursor?: NodeCursor
+    nodeCursor?: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared>;
   getAll(
-    node: NodeCursor
+    node: NodeCursor,
   ): ComponentCursor<ComponentSchema, Data, Shared>[] | null;
   remove(node: NodeCursor): boolean;
   removeAll(node: NodeCursor): boolean;
-  nodeData: {
+  serializedNodeData: {
     get(
-      node: SerializedNodeData
+      node: SerializedNodeData,
     ): SerializedComponentData<ComponentSchema> | null;
     set(
       node: SerializedNodeData,
-      componentSchema?: Partial<ComponentSchema>
+      componentSchema?: Partial<ComponentSchema>,
     ): void;
     getAll(
-      node: SerializedNodeData
+      node: SerializedNodeData,
     ): SerializedComponentData<ComponentSchema>[] | null;
     remove(
-      node: SerializedNodeData
+      node: SerializedNodeData,
     ): SerializedComponentData<ComponentSchema> | null;
     removeAll(
-      node: SerializedNodeData
+      node: SerializedNodeData,
     ): SerializedComponentData<ComponentSchema>[] | null;
+    set(
+      node: CreateNodeData,
+      schema: string,
+      schemaViewId?: string | null,
+    ): SerializedComponentData<ComponentSchema>[] | null;
+  };
+  nodeData: {
+    get(node: CreateNodeData): CreateComponentData<ComponentSchema> | null;
+    set(node: CreateNodeData, componentSchema?: Partial<ComponentSchema>): void;
+    getAll(node: CreateNodeData): CreateComponentData<ComponentSchema>[] | null;
+    remove(node: CreateNodeData): CreateComponentData<ComponentSchema> | null;
+    removeAll(
+      node: CreateNodeData,
+    ): CreateComponentData<ComponentSchema>[] | null;
+    set(
+      node: CreateNodeData,
+      schema: string,
+      schemaViewId?: string,
+      remote?: true | null,
+    ): CreateComponentData<ComponentSchema>[] | null;
   };
 
   type: string;
@@ -92,7 +113,7 @@ type RegisteredComponent<
 }) &
   ((
     schema?: Partial<ComponentSchema> | null | undefined,
-    schemaView?: string | null
+    schemaView?: string | null,
   ) => CreateComponentData<ComponentSchema>);
 
 export const registerComponent = <
@@ -100,9 +121,9 @@ export const registerComponent = <
   Shared extends any = any,
   ComponentSchema extends object = any,
 >(
-  data: ComponentRegisterData<ComponentSchema, Data, Shared>
+  data: ComponentRegisterData<ComponentSchema, Data, Shared>,
 ): RegisteredComponent<ComponentSchema, Data, Shared> => {
-  if(NCSRegister.components.has(data.type)){
+  if (NCSRegister.components.has(data.type)) {
     console.error(`Component of type: ${data.type} is already registered`);
   }
   const typeId = NCSRegister.components.register(data.type, data);
@@ -110,7 +131,7 @@ export const registerComponent = <
   data.shared = data.shared || ({} as Shared);
   const createComponent = (
     schema?: Partial<ComponentSchema> | null | undefined,
-    schemaView?: string | null
+    schemaView?: string | null,
   ): CreateComponentData<ComponentSchema> => {
     const createData: CreateComponentData<ComponentSchema> =
       NCSPools.createComponentData.get() || ([] as any);
@@ -127,7 +148,7 @@ export const registerComponent = <
     typeId,
     *getNodes(
       graph: Graph,
-      nodeCursor = NodeCursor.Get()
+      nodeCursor = NodeCursor.Get(),
     ): Generator<NodeCursor> {
       const array = graph._components[typeId];
       if (!array) return false;
@@ -141,13 +162,13 @@ export const registerComponent = <
     *getComponents(
       graph: Graph,
       cursor = ComponentCursor.Get(),
-      nodeCursor = NodeCursor.Get()
+      nodeCursor = NodeCursor.Get(),
     ): Generator<ComponentCursor> {
       const array = graph._components[typeId];
       if (!array) return false;
       for (let i = 0; i < array._disposed.length; i++) {
         nodeCursor.setNode(graph, array._node[i]);
-        cursor.setInstance(nodeCursor.index,graph, typeId, i);
+        cursor.setInstance(nodeCursor.index, graph, typeId, i);
         yield cursor;
       }
       return true;
@@ -156,12 +177,12 @@ export const registerComponent = <
       node: NodeCursor,
       schema?: Partial<ComponentSchema> | null,
       schemaView?: string | null,
-      cursor = ComponentCursor.Get()
+      cursor = ComponentCursor.Get(),
     ) {
       const newComponent = node.components.add(
-        createComponent(schema, schemaView)
+        createComponent(schema, schemaView),
       );
-      cursor.setInstance(node.index,node.graph, typeId, newComponent);
+      cursor.setInstance(node.index, node.graph, typeId, newComponent);
       node.graph._components[typeId].init(newComponent);
       return cursor;
     },
@@ -171,52 +192,49 @@ export const registerComponent = <
     get(node: NodeCursor, cursor?: ComponentCursor) {
       return node.components.get(data.type, cursor);
     },
-    getRequired(
-      node: NodeCursor,
-      cursor?: ComponentCursor
-    ) {
+    getRequired(node: NodeCursor, cursor?: ComponentCursor) {
       const found = node.components.get(data.type, cursor);
       if (!found)
         throw new Error(
-          `NCS: Node [${node.name}] does not have required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have required component [${data.type}].`,
         );
       return found;
     },
     getChild(
       node: NodeCursor,
       cursor?: ComponentCursor,
-      nodeCursor?: NodeCursor
+      nodeCursor?: NodeCursor,
     ) {
       return node.components.getChild(data.type, cursor);
     },
     getRequiredChild(
       node: NodeCursor,
       cursor?: ComponentCursor,
-      nodeCursor?: NodeCursor
+      nodeCursor?: NodeCursor,
     ) {
       const comp = node.components.getChild(data.type, cursor);
       if (!comp)
         throw new Error(
-          `NCS: Node [${node.name}] does not have a child with required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have a child with required component [${data.type}].`,
         );
       return comp;
     },
     getParent(
       node: NodeCursor,
       cursor?: ComponentCursor,
-      nodeCursor?: NodeCursor
+      nodeCursor?: NodeCursor,
     ) {
       return node.components.getParent(data.type, cursor);
     },
     getRequiredParent(
       node: NodeCursor,
       cursor?: ComponentCursor,
-      nodeCursor?: NodeCursor
+      nodeCursor?: NodeCursor,
     ) {
       const comp = node.components.getParent(data.type, cursor);
       if (!comp)
         throw new Error(
-          `NCS: Node [${node.name}] does not have a parent with required component [${data.type}].`
+          `NCS: Node [${node.name}] does not have a parent with required component [${data.type}].`,
         );
       return comp;
     },
@@ -229,14 +247,14 @@ export const registerComponent = <
     remove(node: NodeCursor) {
       return node.components.remove(data.type);
     },
-    nodeData: {
+    serializedNodeData: {
       get: (node: SerializedNodeData) =>
         node.components?.find((_) => _.type == data.type) || null,
       getAll: (node: SerializedNodeData) =>
         node.components?.filter((_) => _.type == data.type),
       remove: (node: SerializedNodeData) =>
         node.components?.splice(
-          node.components?.findIndex((_) => _.type == data.type)
+          node.components?.findIndex((_) => _.type == data.type),
         )[0] || null,
       removeAll(node: SerializedNodeData) {
         const all = this.getAll(node);
@@ -245,13 +263,65 @@ export const registerComponent = <
       },
       set: (
         node: SerializedNodeData,
-        schema?: Partial<ComponentSchema> | null
+        schema?: Partial<ComponentSchema> | null,
+        schemaViewId: string | null = null,
       ) => {
         node.components ??= [];
         node.components.push({
           type: data.type,
-          schema: {},
+          ...(schema ? { schema } : {}),
+          ...(schemaViewId ? { schemaViewId: schemaViewId } : {}),
         });
+      },
+    },
+    nodeData: {
+      get: (node: CreateNodeData) => {
+        if (!node[2]) return null;
+        for (const comp of node[2]) {
+          if (!comp) continue;
+          if (comp[0] == data.type) return comp;
+        }
+        return null;
+      },
+      getAll: (node: CreateNodeData) => {
+        const comps: CreateComponentData[] = [];
+        if (!node[2]) return comps;
+        for (const comp of node[2]) {
+          if (!comp) continue;
+          if (comp[0] == data.type) {
+            comps.push(comp);
+          }
+        }
+        return comps;
+      },
+      remove: (node: CreateNodeData) => {
+        if (!node[2]) return null;
+        for (let i = 0; i < node[2].length; i++) {
+          const comp = node[2][i];
+          if (!comp) continue;
+          return node[2].splice(i, 1)[0];
+        }
+        return null;
+      },
+      removeAll(node: CreateNodeData) {
+        if (!node[2]) return null;
+        for (let i = node[2].length - 1; i >= 0; i--) {
+          const comp = node[2][i];
+          if (!comp) continue;
+          if (comp[0] == data.type) {
+            node[2].splice(i, 1)[0];
+          }
+        }
+        return null;
+      },
+
+      set: (
+        node: CreateNodeData,
+        schema?: Partial<ComponentSchema> | null,
+        schemaViewId = "default",
+        remote = null,
+      ) => {
+        node[2]?.push([data.type, schema, schemaViewId, remote]);
       },
     },
   }) as any;
